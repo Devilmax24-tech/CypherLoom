@@ -1,41 +1,70 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Materials - Flask App{% endblock %}
+{% block title %}Admin Portal - CypherLoom{% endblock %}
 
 {% block extra_css %}
 <style>
-    .upload-container {
-        background: white;
+    .admin-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         padding: 30px;
         margin-top: 20px;
+        color: white;
+    }
+    
+    .admin-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-box {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .stat-box h3 {
+        font-size: 28px;
+        margin: 10px 0;
+        color: #00d4ff;
     }
     
     .upload-area {
-        border: 3px dashed #ccc;
+        border: 3px dashed #00d4ff;
         border-radius: 10px;
         padding: 50px 20px;
         text-align: center;
-        background-color: #fafafa;
+        background-color: rgba(0, 212, 255, 0.1);
         cursor: pointer;
         transition: all 0.3s;
         margin-bottom: 20px;
     }
     
     .upload-area:hover {
-        border-color: #4361ee;
-        background-color: #f0f5ff;
+        border-color: #00d4ff;
+        background-color: rgba(0, 212, 255, 0.2);
     }
     
     .upload-area.dragover {
-        border-color: #4361ee;
-        background-color: #e6f0ff;
+        border-color: #00d4ff;
+        background-color: rgba(0, 212, 255, 0.3);
     }
     
     .upload-icon {
         font-size: 48px;
-        color: #4361ee;
+        color: #00d4ff;
         margin-bottom: 15px;
     }
     
@@ -47,7 +76,7 @@
     
     .file-item {
         padding: 10px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -60,7 +89,7 @@
     .file-icon {
         font-size: 24px;
         margin-right: 10px;
-        color: #666;
+        color: #aaa;
     }
     
     .file-info {
@@ -70,6 +99,7 @@
     .file-name {
         font-weight: 500;
         margin-bottom: 5px;
+        color: #ddd;
     }
     
     .file-size {
@@ -82,19 +112,24 @@
         margin-top: 10px;
     }
     
-    .btn-upload {
-        background: linear-gradient(135deg, #4361ee, #3f37c9);
+    .btn-admin {
+        background: linear-gradient(135deg, #00d4ff, #0099cc);
         border: none;
         padding: 12px 30px;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
+        color: white;
+        border-radius: 5px;
+        transition: all 0.3s;
     }
     
-    .btn-upload:hover {
-        background: linear-gradient(135deg, #3f37c9, #4361ee);
+    .btn-admin:hover {
+        background: linear-gradient(135deg, #0099cc, #00d4ff);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
     }
     
-    .btn-upload:disabled {
+    .btn-admin:disabled {
         opacity: 0.6;
         cursor: not-allowed;
     }
@@ -105,111 +140,282 @@
         border-radius: 8px;
         display: none;
     }
+    
+    .user-table {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .user-table th {
+        background: rgba(0, 212, 255, 0.3);
+        border: none;
+        color: white;
+    }
+    
+    .user-table td {
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #ddd;
+    }
+    
+    .btn-danger-admin {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        border: none;
+        color: white;
+    }
+    
+    .btn-danger-admin:hover {
+        background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    }
+    
+    .danger-zone {
+        border: 2px solid #ff416c;
+        background: rgba(255, 65, 108, 0.1);
+    }
+    
+    .form-control, .form-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: rgba(0, 0, 0, 0.5);
+        border-color: #00d4ff;
+        color: white;
+        box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="upload-container">
-            <!-- Header -->
+    <div class="col-lg-12">
+        <div class="admin-container">
+            <!-- Admin Header -->
             <div class="text-center mb-4">
-                <h1 class="mb-3"><i class="fas fa-cloud-upload-alt text-primary"></i> Upload Materials</h1>
-                <p class="text-muted">Upload documents, images, presentations, and other materials</p>
+                <h1 class="mb-3"><i class="fas fa-shield-alt"></i> CypherLoom Admin Portal</h1>
+                <p class="text-muted">System Control Panel - Authorized Access Only</p>
+                <a href="/logout" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
 
-            <!-- Upload Form -->
-            <form id="uploadForm" method="POST" action="{{ url_for('upload_files') }}" enctype="multipart/form-data">
-                <!-- Upload Area -->
-                <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <h4>Drag & Drop Files Here</h4>
-                    <p class="text-muted">or click to browse files</p>
-                    <p class="text-muted small">Supports: PDF, DOC, PPT, JPG, PNG, ZIP (Max: 16MB each)</p>
+            <!-- Statistics Dashboard -->
+            <div class="admin-stats">
+                <div class="stat-box">
+                    <i class="fas fa-users fa-2x"></i>
+                    <h3>{{ stats.total_users }}</h3>
+                    <p>Total Users</p>
                 </div>
-
-                <!-- Hidden File Input -->
-                <input type="file" id="files" name="files" multiple style="display: none;" 
-                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar,.mp4,.mp3"
-                       onchange="updateFileList()">
-
-                <!-- File List -->
-                <div id="fileList" class="file-list"></div>
-
-                <!-- Additional Fields -->
-                <div class="row mt-4">
-                    <div class="col-md-6 mb-3">
-                        <label for="description" class="form-label">
-                            <i class="fas fa-align-left"></i> Description (Optional)
-                        </label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="3" placeholder="Add a description for these files..."></textarea>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="category" class="form-label">
-                            <i class="fas fa-folder"></i> Category
-                        </label>
-                        <select class="form-select" id="category" name="category">
-                            <option value="general" selected>General</option>
-                            <option value="documents">Documents</option>
-                            <option value="images">Images</option>
-                            <option value="presentations">Presentations</option>
-                            <option value="videos">Videos</option>
-                            <option value="audio">Audio</option>
-                            <option value="archives">Archives</option>
-                        </select>
-                    </div>
+                <div class="stat-box">
+                    <i class="fas fa-file-upload fa-2x"></i>
+                    <h3>{{ stats.total_files }}</h3>
+                    <p>Total Files</p>
                 </div>
-
-                <!-- Progress Bar -->
-                <div class="upload-progress progress" style="display: none;">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" style="width: 0%">
-                    </div>
+                <div class="stat-box">
+                    <i class="fas fa-database fa-2x"></i>
+                    <h3>{{ "%0.1f"|format(stats.total_size_mb) }} MB</h3>
+                    <p>Storage Used</p>
                 </div>
-
-                <!-- Status Message -->
-                <div id="uploadStatus" class="upload-status"></div>
-
-                <!-- Buttons -->
-                <div class="d-flex justify-content-between mt-4">
-                    <button type="button" class="btn btn-outline-secondary" onclick="clearFiles()">
-                        <i class="fas fa-times"></i> Clear All
-                    </button>
-                    <button type="submit" id="uploadBtn" class="btn btn-upload" disabled>
-                        <i class="fas fa-upload"></i> Upload Files
-                    </button>
+                <div class="stat-box">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                    <h3>{{ stats.today_uploads }}</h3>
+                    <p>Today's Uploads</p>
                 </div>
-            </form>
-        </div>
+            </div>
 
-        <!-- Recent Uploads -->
-        <div class="upload-container mt-4">
-            <h4><i class="fas fa-history"></i> Recent Uploads</h4>
-            {% if files %}
-                <div class="list-group mt-3">
-                    {% for file in files %}
-                        <div class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-file-{% if file.endswith('.pdf') %}pdf{% elif file.endswith(('.jpg', '.png', '.jpeg')) %}image{% elif file.endswith(('.doc', '.docx')) %}word{% elif file.endswith(('.ppt', '.pptx')) %}powerpoint{% else %}alt{% endif %} text-primary me-2"></i>
-                                    <span class="fw-medium">{{ file }}</span>
-                                </div>
-                                <div>
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" 
-                                       class="btn btn-sm btn-outline-primary" download>
-                                        <i class="fas fa-download"></i> Download
-                                    </a>
-                                </div>
-                            </div>
+            <!-- Section 1: File Upload (Your original upload form enhanced) -->
+            <div class="admin-card">
+                <h3><i class="fas fa-cloud-upload-alt"></i> Upload Materials</h3>
+                <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
+                    <!-- Upload Area -->
+                    <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
                         </div>
-                    {% endfor %}
+                        <h4>Drag & Drop Files Here</h4>
+                        <p class="text-muted">or click to browse files</p>
+                        <p class="text-muted small">Supports: PDF, DOC, PPT, JPG, PNG, ZIP (Max: 50MB each)</p>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="files" name="files" multiple style="display: none;" 
+                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar,.mp4,.mp3"
+                           onchange="updateFileList()">
+
+                    <!-- File List -->
+                    <div id="fileList" class="file-list"></div>
+
+                    <!-- Additional Fields -->
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left"></i> Description (Optional)
+                            </label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3" placeholder="Add a description for these files..."></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-folder"></i> Category
+                            </label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="notes">Study Notes</option>
+                                <option value="pyq">Previous Year Papers</option>
+                                <option value="books">Books</option>
+                                <option value="projects">Projects</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="upload-progress progress" style="display: none;">
+                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%">
+                        </div>
+                    </div>
+
+                    <!-- Status Message -->
+                    <div id="uploadStatus" class="upload-status"></div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-light" onclick="clearFiles()">
+                            <i class="fas fa-times"></i> Clear All
+                        </button>
+                        <button type="submit" id="uploadBtn" class="btn btn-admin" disabled>
+                            <i class="fas fa-upload"></i> Upload Files
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section 2: Recent Uploads -->
+            <div class="admin-card">
+                <h4><i class="fas fa-history"></i> Recent Uploads</h4>
+                {% if all_files %}
+                    <div class="table-responsive">
+                        <table class="table user-table">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Size</th>
+                                    <th>Upload Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in all_files[:10] %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-{% if file.endswith('.pdf') %}pdf{% elif file.endswith(('.jpg','.png','.jpeg')) %}image{% elif file.endswith(('.doc','.docx')) %}word{% elif file.endswith(('.ppt','.pptx')) %}powerpoint{% else %}alt{% endif %} me-2"></i>
+                                        {{ file }}
+                                    </td>
+                                    <td>{{ file_sizes[file] }}</td>
+                                    <td>{{ file_dates[file] }}</td>
+                                    <td>
+                                        <a href="{{ url_for('uploaded_file', filename=file) }}" 
+                                           class="btn btn-sm btn-admin me-2" download>
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <form action="{{ url_for('delete_file', filename=file) }}" method="POST" 
+                                              style="display:inline;" onsubmit="return confirm('Delete {{ file }}?')">
+                                            <button type="submit" class="btn btn-sm btn-danger-admin">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if all_files|length > 10 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Showing 10 of {{ all_files|length }} files</small>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted text-center py-4">No files uploaded yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Section 3: User Management -->
+            <div class="admin-card">
+                <h3><i class="fas fa-user-cog"></i> User Management</h3>
+                <div class="table-responsive">
+                    <table class="table user-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-primary">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">User</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not user.is_admin %}
+                                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" 
+                                          style="display:inline;" onsubmit="return confirm('Delete user {{ user.username }}?')">
+                                        <button type="submit" class="btn btn-sm btn-danger-admin">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            {% else %}
-                <p class="text-muted text-center py-4">No files uploaded yet.</p>
-            {% endif %}
+            </div>
+
+            <!-- Section 4: Danger Zone -->
+            <div class="admin-card danger-zone">
+                <h3 class="text-danger"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <form action="{{ url_for('clear_old_files') }}" method="POST" 
+                              onsubmit="return confirm('Delete all files older than 30 days?')">
+                            <button type="submit" class="btn btn-danger-admin w-100">
+                                <i class="fas fa-broom"></i> Clear Old Files
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <form action="{{ url_for('export_users') }}" method="GET">
+                            <button type="submit" class="btn btn-admin w-100">
+                                <i class="fas fa-file-export"></i> Export Users
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <form action="{{ url_for('system_backup') }}" method="POST">
+                            <button type="submit" class="btn btn-admin w-100">
+                                <i class="fas fa-database"></i> System Backup
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -305,7 +511,7 @@
         selectedFiles = [];
         document.getElementById('files').value = '';
         document.getElementById('description').value = '';
-        document.getElementById('category').value = 'general';
+        document.getElementById('category').value = 'notes';
         updateFileList();
     }
     
@@ -376,12 +582,10 @@
         uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
         
         try {
-            const response = await fetch('{{ url_for("upload_files") }}', {
+            const response = await fetch('{{ url_for("admin_upload") }}', {
                 method: 'POST',
                 body: formData
             });
-            
-            const result = await response.json();
             
             if (response.ok) {
                 // Show success
@@ -392,7 +596,7 @@
                 uploadStatus.className = 'upload-status alert alert-success';
                 uploadStatus.innerHTML = `
                     <i class="fas fa-check-circle"></i> 
-                    ${result.message}
+                    Files uploaded successfully!
                     <div class="mt-2">
                         <a href="#" onclick="location.reload()" class="btn btn-sm btn-success">
                             <i class="fas fa-sync"></i> Refresh Page
@@ -407,7 +611,7 @@
                     location.reload();
                 }, 2000);
             } else {
-                throw new Error(result.error || 'Upload failed');
+                throw new Error('Upload failed');
             }
         } catch (error) {
             progressBar.className = 'progress-bar bg-danger progress-bar-striped progress-bar-animated';
