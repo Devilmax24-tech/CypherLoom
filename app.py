@@ -155,7 +155,13 @@ def index():
 
 # Add these upload routes AFTER the index route
 @app.route('/upload_files', methods=['GET', 'POST'])
+@login_required
 def upload_files():
+
+    if not current_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
         # Check if files were uploaded
         if 'files' not in request.files:
@@ -478,97 +484,97 @@ def download_resource(resource_id):
         flash('Error downloading file. Please try again.', 'danger')
         return redirect(url_for('view_resource', resource_id=resource_id))
 
-@app.route('/upload', methods=['GET', 'POST'])
-@login_required
-def upload():
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        resource_type = request.form['resource_type']
-        branch = request.form['branch']
-        semester = request.form['semester']
-        subject = request.form['subject']
-        year = request.form.get('year')
-        file = request.files['file']
+# @app.route('/upload', methods=['GET', 'POST'])
+# @login_required
+# def upload():
+#     if request.method == 'POST':
+#         title = request.form['title']
+#         description = request.form['description']
+#         resource_type = request.form['resource_type']
+#         branch = request.form['branch']
+#         semester = request.form['semester']
+#         subject = request.form['subject']
+#         year = request.form.get('year')
+#         file = request.files['file']
         
-        # Validate file
-        if not file or file.filename == '':
-            flash('No file selected!', 'danger')
-            return redirect(url_for('upload'))
+#         # Validate file
+#         if not file or file.filename == '':
+#             flash('No file selected!', 'danger')
+#             return redirect(url_for('upload'))
         
-        filename = secure_filename(file.filename)
-        file_ext = os.path.splitext(filename)[1].lower()
+#         filename = secure_filename(file.filename)
+#         file_ext = os.path.splitext(filename)[1].lower()
         
-        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-            flash('Invalid file type!', 'danger')
-            return redirect(url_for('upload'))
+#         if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+#             flash('Invalid file type!', 'danger')
+#             return redirect(url_for('upload'))
         
-        try:
-            # Save file temporarily
-            temp_dir = 'temp_uploads'
-            os.makedirs(temp_dir, exist_ok=True)
-            temp_path = os.path.join(temp_dir, filename)
-            file.save(temp_path)
-            file_size = os.path.getsize(temp_path)
+#         try:
+#             # Save file temporarily
+#             temp_dir = 'temp_uploads'
+#             os.makedirs(temp_dir, exist_ok=True)
+#             temp_path = os.path.join(temp_dir, filename)
+#             file.save(temp_path)
+#             file_size = os.path.getsize(temp_path)
             
-            # Upload to Google Drive
-            service = get_drive_service()
-            if service:
-                file_metadata = {
-                    'name': filename,
-                    'parents': [app.config['GOOGLE_DRIVE_FOLDER_ID']]
-                }
-                media = MediaFileUpload(temp_path, resumable=True)
-                uploaded = service.files().create(
-                    body=file_metadata,
-                    media_body=media,
-                    fields='id'
-                ).execute()
+#             # Upload to Google Drive
+#             service = get_drive_service()
+#             if service:
+#                 file_metadata = {
+#                     'name': filename,
+#                     'parents': [app.config['GOOGLE_DRIVE_FOLDER_ID']]
+#                 }
+#                 media = MediaFileUpload(temp_path, resumable=True)
+#                 uploaded = service.files().create(
+#                     body=file_metadata,
+#                     media_body=media,
+#                     fields='id'
+#                 ).execute()
                 
-                file_id = uploaded.get('id')
+#                 file_id = uploaded.get('id')
                 
-                # Create resource record
-                resource = Resource(
-                    title=title,
-                    description=description,
-                    file_id=file_id,
-                    file_name=filename,
-                    file_type=file_ext[1:],  # Remove dot
-                    file_size=f"{file_size / 1024:.1f} KB",
-                    resource_type=resource_type,
-                    branch=branch,
-                    semester=semester,
-                    subject=subject,
-                    year=int(year) if year and year.isdigit() else None,
-                    uploader_id=current_user.id,
-                    tags=f"{resource_type},{branch},{subject}"
-                )
+#                 # Create resource record
+#                 resource = Resource(
+#                     title=title,
+#                     description=description,
+#                     file_id=file_id,
+#                     file_name=filename,
+#                     file_type=file_ext[1:],  # Remove dot
+#                     file_size=f"{file_size / 1024:.1f} KB",
+#                     resource_type=resource_type,
+#                     branch=branch,
+#                     semester=semester,
+#                     subject=subject,
+#                     year=int(year) if year and year.isdigit() else None,
+#                     uploader_id=current_user.id,
+#                     tags=f"{resource_type},{branch},{subject}"
+#                 )
                 
-                db.session.add(resource)
-                db.session.flush()  # Get resource ID
+#                 db.session.add(resource)
+#                 db.session.flush()  # Get resource ID
                 
-                # Create upload record
-                upload_record = Upload(
-                    user_id=current_user.id,
-                    resource_id=resource.id
-                )
-                db.session.add(upload_record)
-                db.session.commit()
+#                 # Create upload record
+#                 upload_record = Upload(
+#                     user_id=current_user.id,
+#                     resource_id=resource.id
+#                 )
+#                 db.session.add(upload_record)
+#                 db.session.commit()
                 
-                flash('File uploaded successfully! It will be reviewed before publishing.', 'success')
-                os.remove(temp_path)
-                return redirect(url_for('dashboard'))
+#                 flash('File uploaded successfully! It will be reviewed before publishing.', 'success')
+#                 os.remove(temp_path)
+#                 return redirect(url_for('dashboard'))
                 
-            else:
-                flash('Google Drive service not configured.', 'danger')
+#             else:
+#                 flash('Google Drive service not configured.', 'danger')
                 
-        except Exception as e:
-            app.logger.error(f"Upload error: {e}")
-            flash(f'Error uploading file: {str(e)}', 'danger')
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+#         except Exception as e:
+#             app.logger.error(f"Upload error: {e}")
+#             flash(f'Error uploading file: {str(e)}', 'danger')
+#             if os.path.exists(temp_path):
+#                 os.remove(temp_path)
     
-    return render_template('upload.html')
+    # return render_template('upload.html')
 
 @app.route('/progress')
 @login_required
@@ -676,6 +682,154 @@ with app.app_context():
         )
         db.session.add(admin)
         db.session.commit()
+
+# ================= ADMIN ROUTES =================
+ADMIN_SECRET_PATH = "901c5d592a1e3dc872a2b8da35a2a60442abbddb59a1a43f8f313b8eb814d537"  # Change this to your secret
+
+@app.route(f'/{ADMIN_SECRET_PATH}', methods=['GET', 'POST'])
+@login_required
+def admin_portal():
+    # Check if user is admin
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    # Get statistics
+    total_users = User.query.count()
+    total_files = len(os.listdir(UPLOAD_FOLDER)) if os.path.exists(UPLOAD_FOLDER) else 0
+    
+    # Calculate total size
+    total_size = 0
+    if os.path.exists(UPLOAD_FOLDER):
+        for file in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, file)
+            if os.path.isfile(file_path):
+                total_size += os.path.getsize(file_path)
+    
+    # Get all users (except current admin)
+    users = User.query.filter(User.id != current_user.id).all()
+    
+    # Get all files with metadata
+    all_files = []
+    file_sizes = {}
+    file_dates = {}
+    
+    if os.path.exists(UPLOAD_FOLDER):
+        all_files = os.listdir(UPLOAD_FOLDER)
+        for file in all_files:
+            file_path = os.path.join(UPLOAD_FOLDER, file)
+            if os.path.isfile(file_path):
+                # Get file size
+                size_bytes = os.path.getsize(file_path)
+                file_sizes[file] = f"{size_bytes/1024:.1f} KB" if size_bytes < 1024*1024 else f"{size_bytes/(1024*1024):.2f} MB"
+                
+                # Get modification date
+                timestamp = os.path.getmtime(file_path)
+                file_dates[file] = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M')
+    
+    # File download counts (you need to implement this tracking)
+    file_downloads = {}  # Implement tracking logic
+    
+    return render_template('upload.html',
+                         stats={
+                             'total_users': total_users,
+                             'total_files': total_files,
+                             'total_size_mb': total_size/(1024*1024),
+                             'today_uploads': 0  # Implement tracking
+                         },
+                         users=users,
+                         all_files=all_files,
+                         file_sizes=file_sizes,
+                         file_dates=file_dates,
+                         file_downloads=file_downloads)
+
+@app.route('/admin/upload', methods=['POST'])
+@login_required
+def admin_upload():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    if 'files' not in request.files:
+        flash('No files selected', 'error')
+        return redirect(f'/{ADMIN_SECRET_PATH}')
+    
+    files = request.files.getlist('files')
+    uploaded_count = 0
+    
+    for file in files:
+        if file.filename == '':
+            continue
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            new_filename = f"{timestamp}_{filename}"
+            file.save(os.path.join(UPLOAD_FOLDER, new_filename))
+            uploaded_count += 1
+    
+    flash(f'Uploaded {uploaded_count} file(s)', 'success')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/delete/user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Don't allow deleting yourself or other admins
+    if user.id == current_user.id or user.is_admin:
+        flash('Cannot delete admin users', 'error')
+        return redirect(f'/{ADMIN_SECRET_PATH}')
+    
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'User {user.username} deleted', 'success')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/delete/file/<filename>', methods=['POST'])
+@login_required
+def delete_file(filename):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        flash('File deleted', 'success')
+    
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/clear-old-files', methods=['POST'])
+@login_required
+def clear_old_files():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    # Implement: Delete files older than 30 days
+    flash('Feature not implemented yet', 'info')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/export-users')
+@login_required
+def export_users():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    # Implement: Export users to CSV
+    flash('Feature not implemented yet', 'info')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/backup', methods=['POST'])
+@login_required
+def system_backup():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    # Implement: System backup
+    flash('Feature not implemented yet', 'info')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
 
 
 if __name__ == '__main__':
