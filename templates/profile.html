@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - CypherLoom{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Profile Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <!-- Edit Icon Button -->
+                    <div class="position-relative">
+                        <div class="avatar-xl mx-auto mb-3">
+                            <i class="fas fa-user-circle fa-6x text-muted"></i>
+                            <button class="edit-profile-btn" onclick="toggleEditMode()">
+                                <i class="fas fa-user-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h4 class="fw-bold mb-1">{{ user.full_name or user.username }}</h4>
+                    <p class="text-muted mb-3">@{{ user.username }}</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        {% if user.year %}
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-calendar me-1"></i>{{ user.year }} Year
+                        </span>
+                        {% endif %}
+                        
+                        {% if user.branch %}
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-code-branch me-1"></i>{{ user.branch }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-muted small">
+                        <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Your Stats</h6>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ user.uploads|length }}</div>
+                            <div class="stat-label">Uploads</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">{{ user.progress|selectattr('completed')|list|length }}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">
+                                {% set total_time = user.progress|sum(attribute='time_spent') %}
+                                {{ total_time//60 }}h
+                            </div>
+                            <div class="stat-label">Study Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">{{ user.created_at.strftime('%b %Y') }}</div>
+                            <div class="stat-label">Member Since</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Edit Profile Form (Hidden by default) -->
+            <div id="editProfileForm" class="card border-0 shadow-sm mb-4" style="display: none;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Edit Profile</h5>
+                    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="full_name" 
+                                       value="{{ user.full_name or '' }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="{{ user.email }}">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Year</label>
+                                <select class="form-select" name="year">
+                                    <option value="">Select Year</option>
+                                    {% for year in ['1st', '2nd', '3rd', '4th', '5th'] %}
+                                    <option value="{{ year }}" {% if user.year == year %}selected{% endif %}>
+                                        {{ year }} Year
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Branch</label>
+                                <select class="form-select" name="branch">
+                                    <option value="">Select Branch</option>
+                                    {% for branch in ['CSE', 'ECE', 'EEE', 'ME', 'CE', 'IT'] %}
+                                    <option value="{{ branch }}" {% if user.branch == branch %}selected{% endif %}>
+                                        {{ branch }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Bio</label>
+                                <textarea class="form-control" name="bio" rows="3" 
+                                          placeholder="Tell us about yourself...">{{ user.bio or '' }}</textarea>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Profile Picture</label>
+                                <input type="file" class="form-control" name="profile_pic" accept="image/*">
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">Recent Activity</h5>
+                        <button class="edit-profile-btn btn-sm" onclick="toggleEditMode()">
+                            <i class="fas fa-user-edit"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="activity-timeline">
+                        {% if user.uploads %}
+                            {% for upload in user.uploads[:5] %}
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-upload text-primary"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <h6 class="fw-bold mb-1">Uploaded {{ upload.resource.title }}</h6>
+                                    <p class="text-muted small mb-0">
+                                        {{ upload.upload_date.strftime('%b %d, %Y at %I:%M %p') }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No activity yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Overview -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Learning Progress</h5>
+                    {% if user.progress %}
+                        {% for subject, stats in subject_stats.items() %}
+                        <div class="progress-item mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold">{{ subject }}</span>
+                                <span>{{ stats.completed }}/{{ stats.total }}</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ (stats.completed / stats.total * 100) if stats.total > 0 else 0 }}%;">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Start tracking your progress to see insights</p>
+                        <a href="{{ url_for('progress') }}" class="btn btn-primary btn-sm">
+                            Track Progress
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleEditMode() {
+        const form = document.getElementById('editProfileForm');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            form.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

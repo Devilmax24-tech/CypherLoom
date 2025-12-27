@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource.title }} - CypherLoom{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('resources') }}">Resources</a></li>
+            <li class="breadcrumb-item active">{{ resource.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Resource Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <span class="badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% else %}badge-sample{% endif %} me-2">
+                                {{ resource.resource_type|upper }}
+                            </span>
+                            {% if resource.year %}
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-calendar-alt me-1"></i>{{ resource.year }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted">
+                            <small>
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ resource.upload_date.strftime('%B %d, %Y') }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <h1 class="h3 fw-bold mb-3">{{ resource.title }}</h1>
+                    
+                    {% if resource.description %}
+                    <div class="mb-4">
+                        <p class="lead">{{ resource.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Resource Info -->
+                    <div class="row g-3 mb-4">
+                        {% if resource.subject %}
+                        <div class="col-md-4">
+                            <div class="info-card">
+                                <i class="fas fa-book text-primary"></i>
+                                <div>
+                                    <small class="text-muted">Subject</small>
+                                    <p class="mb-0 fw-bold">{{ resource.subject }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if resource.branch %}
+                        <div class="col-md-4">
+                            <div class="info-card">
+                                <i class="fas fa-code-branch text-success"></i>
+                                <div>
+                                    <small class="text-muted">Branch</small>
+                                    <p class="mb-0 fw-bold">{{ resource.branch }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if resource.semester %}
+                        <div class="col-md-4">
+                            <div class="info-card">
+                                <i class="fas fa-layer-group text-warning"></i>
+                                <div>
+                                    <small class="text-muted">Semester</small>
+                                    <p class="mb-0 fw-bold">Sem {{ resource.semester }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="d-flex gap-4 mb-4">
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-primary">{{ resource.downloads }}</div>
+                            <small class="text-muted">Downloads</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-success">{{ resource.views }}</div>
+                            <small class="text-muted">Views</small>
+                        </div>
+                        {% if resource.rating %}
+                        <div class="text-center">
+                            <div class="display-6 fw-bold text-warning">{{ resource.rating }}</div>
+                            <small class="text-muted">Rating</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                           class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-download me-2"></i>Download Now
+                        </a>
+                        
+                        {% if resource.file_id %}
+                        <a href="https://drive.google.com/file/d/{{ resource.file_id }}/view" 
+                           class="btn btn-outline-primary btn-lg px-4" target="_blank">
+                            <i class="fas fa-external-link-alt me-2"></i>Preview
+                        </a>
+                        {% endif %}
+                        
+                        <button class="btn btn-outline-secondary btn-lg px-4" onclick="shareResource()">
+                            <i class="fas fa-share-alt me-2"></i>Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Resources -->
+            {% if related_resources %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">Related Resources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for related in related_resources %}
+                        <div class="col-md-6 mb-3">
+                            <div class="related-resource">
+                                <h6 class="fw-bold mb-1">{{ related.title }}</h6>
+                                <small class="text-muted">{{ related.resource_type|title }} • {{ related.subject }}</small>
+                                <a href="{{ url_for('view_resource', resource_id=related.id) }}" 
+                                   class="btn btn-sm btn-outline-primary mt-2">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Uploader Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Uploaded By</h6>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar me-3">
+                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-bold">{{ resource.uploader.username if resource.uploader else 'System' }}</p>
+                            <small class="text-muted">
+                                Member since {{ resource.uploader.created_at.strftime('%Y') if resource.uploader else '' }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">File Details</h6>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <i class="fas fa-file text-primary"></i>
+                            <span>File Name</span>
+                            <strong>{{ resource.file_name }}</strong>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-expand-alt text-success"></i>
+                            <span>Format</span>
+                            <strong>{{ resource.file_type|upper }}</strong>
+                        </div>
+                        {% if resource.file_size %}
+                        <div class="info-item">
+                            <i class="fas fa-weight text-warning"></i>
+                            <span>Size</span>
+                            <strong>{{ resource.file_size }}</strong>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <i class="fas fa-database text-info"></i>
+                            <span>Storage</span>
+                            <strong>Google Drive</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="addToBookmarks()">
+                            <i class="fas fa-bookmark me-2"></i>Bookmark
+                        </button>
+                        <button class="btn btn-outline-success" onclick="reportResource()">
+                            <i class="fas fa-flag me-2"></i>Report Issue
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="suggestEdit()">
+                            <i class="fas fa-edit me-2"></i>Suggest Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function shareResource() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ resource.title }}',
+                text: 'Check out this resource on CypherLoom',
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+        }
+    }
+    
+    function addToBookmarks() {
+        // Implement bookmark functionality
+        alert('Added to bookmarks!');
+    }
+    
+    function reportResource() {
+        // Implement report functionality
+        alert('Report submitted!');
+    }
+    
+    function suggestEdit() {
+        // Implement edit suggestion
+        alert('Edit suggestion sent!');
+    }
+</script>
+{% endblock %}

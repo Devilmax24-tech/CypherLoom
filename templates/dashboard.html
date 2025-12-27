@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CypherLook{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 fw-bold mb-1">Welcome, {{ current_user.username }}!</h1>
+                            <p class="text-muted mb-0">Here's your learning dashboard</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="mb-0"><small class="text-muted">Member since {{ current_user.created_at.strftime('%B %Y') }}</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_resources }}</div>
+                <div class="stat-label">Total Resources</div>
+                <i class="fas fa-book fa-2x mt-3"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ user_uploads }}</div>
+                <div class="stat-label">Your Uploads</div>
+                <i class="fas fa-upload fa-2x mt-3"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ completed_progress }}</div>
+                <div class="stat-label">Completed Topics</div>
+                <i class="fas fa-check-circle fa-2x mt-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Quick Actions</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('resources') }}" class="btn btn-primary w-100 py-3">
+                                <i class="fas fa-search me-2"></i>Browse Resources
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('upload') }}" class="btn btn-success w-100 py-3">
+                                <i class="fas fa-upload me-2"></i>Upload Material
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('progress') }}" class="btn btn-warning w-100 py-3">
+                                <i class="fas fa-chart-line me-2"></i>Track Progress
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('profile') }}" class="btn btn-info w-100 py-3">
+                                <i class="fas fa-user me-2"></i>Your Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Resources -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Recent Resources</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_resources %}
+                    <div class="list-group list-group-flush">
+                        {% for resource in recent_resources %}
+                        <div class="list-group-item border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ resource.title }}</h6>
+                                    <p class="text-muted mb-1 small">
+                                        <i class="fas fa-tag me-1"></i>{{ resource.category|title }} • 
+                                        <i class="fas fa-book me-1"></i>{{ resource.subject }} • 
+                                        <i class="fas fa-calendar me-1"></i>{{ resource.upload_date.strftime('%b %d, %Y') }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('view_resource', resource_id=resource.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No resources available yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{{ url_for('resources') }}" class="btn btn-link text-decoration-none">
+                        View All Resources <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Summary -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Study Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="progress-circle mx-auto" style="width: 120px; height: 120px;">
+                            {% set progress_percent = (completed_progress / (total_resources if total_resources > 0 else 1)) * 100 %}
+                            <div class="d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--primary-color) {{ progress_percent }}%, #e2e8f0 0%);">
+                                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                                    <span class="h4 fw-bold">{{ "%.1f"|format(progress_percent) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0">Overall Completion</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('progress') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Progress
+                        </a>
+                        <a href="{{ url_for('progress') }}" class="btn btn-outline-primary">
+                            View Detailed Progress
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

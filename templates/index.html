@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}CypherLoom - Smart Learning Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Homepage Specific Styles */
+    .floating-shapes {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .shape {
+        position: absolute;
+        background: var(--primary-gradient);
+        opacity: 0.1;
+        border-radius: 50%;
+        animation: floatShape 20s infinite linear;
+    }
+    
+    .shape:nth-child(1) {
+        width: 300px;
+        height: 300px;
+        top: 10%;
+        left: 5%;
+        animation-delay: 0s;
+    }
+    
+    .shape:nth-child(2) {
+        width: 200px;
+        height: 200px;
+        top: 60%;
+        right: 10%;
+        animation-delay: 5s;
+        background: var(--secondary-gradient);
+    }
+    
+    .shape:nth-child(3) {
+        width: 150px;
+        height: 150px;
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 10s;
+        background: var(--accent-gradient);
+    }
+    
+    @keyframes floatShape {
+        0% {
+            transform: translate(0, 0) rotate(0deg);
+        }
+        33% {
+            transform: translate(100px, 100px) rotate(120deg);
+        }
+        66% {
+            transform: translate(-50px, 150px) rotate(240deg);
+        }
+        100% {
+            transform: translate(0, 0) rotate(360deg);
+        }
+    }
+    
+    .feature-slider {
+        overflow: hidden;
+        position: relative;
+        height: 400px;
+    }
+    
+    .slider-track {
+        display: flex;
+        animation: slide 30s linear infinite;
+    }
+    
+    .slider-item {
+        min-width: 300px;
+        margin: 0 1rem;
+    }
+    
+    @keyframes slide {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+    
+    .stats-counter {
+        font-size: 3rem;
+        font-weight: 900;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Floating Background Shapes -->
+<div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="hero-title fade-in-up">
+                        <span class="c-char">C</span>ypherLoom
+                    </h1>
+                    <p class="hero-subtitle fade-in-up" style="animation-delay: 0.2s">
+                        Where <span class="cypher-text">C</span>onnections Create <span class="cypher-text">C</span>omprehension
+                    </p>
+                    <p class="lead mb-4 fade-in-up" style="animation-delay: 0.4s">
+                        Revolutionizing education with smart notes, PYQs, and collaborative learning.
+                        Track progress, share knowledge, and excel in your academic journey.
+                    </p>
+                    <div class="d-flex gap-3 fade-in-up" style="animation-delay: 0.6s">
+                        {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-rocket me-2"></i>Launch Learning
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-sign-in-alt me-2"></i>Scholar Login
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('resources') }}" class="btn btn-success btn-lg px-4">
+                            <i class="fas fa-search me-2"></i>Explore Resources
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <!-- Animated Feature Cards -->
+                    <div class="feature-slider mt-5 mt-lg-0">
+                        <div class="slider-track">
+                            {% for i in range(6) %}
+                            <div class="slider-item">
+                                <div class="grid-card">
+                                    <div class="icon">
+                                        <i class="fas fa-{{ ['book', 'graduation-cap', 'brain', 'chart-line', 'users', 'cloud-upload-alt'][i] }}"></i>
+                                    </div>
+                                    <h5>{{ ['Smart Notes', 'PYQ Archive', 'AI Insights', 'Progress Tracking', 'Community', 'Easy Upload'][i] }}</h5>
+                                    <p class="text-muted small">
+                                        {{ ['Curated study materials', 'Previous year questions', 'Personalized recommendations', 'Track your growth', 'Collaborate with peers', 'Share knowledge easily'][i] }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            <!-- Duplicate for infinite scroll -->
+                            {% for i in range(6) %}
+                            <div class="slider-item">
+                                <div class="grid-card">
+                                    <div class="icon">
+                                        <i class="fas fa-{{ ['book', 'graduation-cap', 'brain', 'chart-line', 'users', 'cloud-upload-alt'][i] }}"></i>
+                                    </div>
+                                    <h5>{{ ['Smart Notes', 'PYQ Archive', 'AI Insights', 'Progress Tracking', 'Community', 'Easy Upload'][i] }}</h5>
+                                    <p class="text-muted small">
+                                        {{ ['Curated study materials', 'Previous year questions', 'Personalized recommendations', 'Track your growth', 'Collaborate with peers', 'Share knowledge easily'][i] }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter" data-count="{{ stats.total_resources }}">0</div>
+                <p class="text-muted">Resources</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter" data-count="{{ stats.total_users }}">0</div>
+                <p class="text-muted">Active Learners</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter" data-count="{{ stats.total_downloads|int }}">0</div>
+                <p class="text-muted">Downloads</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter" data-count="24">0</div>
+                <p class="text-muted">/7 Support</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">
+                    <span class="c-char">C</span>urated <span class="c-char">C</span>ontent, <span class="c-char">C</span>onnected <span class="c-char">C</span>ommunity
+                </h2>
+                <p class="text-muted">Everything you need for academic excellence</p>
+            </div>
+        </div>
+        
+        <div class="animated-grid">
+            <div class="grid-card slide-in-left">
+                <div class="icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h4>Smart Resource Hub</h4>
+                <p>Access thousands of verified notes, PYQs, and sample papers with intelligent categorization.</p>
+            </div>
+            
+            <div class="grid-card fade-in-up" style="animation-delay: 0.2s">
+                <div class="icon">
+                    <i class="fas fa-chart-network"></i>
+                </div>
+                <h4>Progress Analytics</h4>
+                <p>Track your learning journey with detailed insights and personalized recommendations.</p>
+            </div>
+            
+            <div class="grid-card slide-in-right" style="animation-delay: 0.4s">
+                <div class="icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <h4>Collaborative Learning</h4>
+                <p>Connect with peers, share knowledge, and solve problems together in study groups.</p>
+            </div>
+            
+            <div class="grid-card slide-in-left" style="animation-delay: 0.6s">
+                <div class="icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h4>AI-Powered Assistant</h4>
+                <p>Get smart suggestions and personalized study plans based on your progress.</p>
+            </div>
+            
+            <div class="grid-card fade-in-up" style="animation-delay: 0.8s">
+                <div class="icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h4>Mobile First</h4>
+                <p>Access your study materials anytime, anywhere with our responsive mobile interface.</p>
+            </div>
+            
+            <div class="grid-card slide-in-right" style="animation-delay: 1s">
+                <div class="icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>Secure Platform</h4>
+                <p>Your data is protected with enterprise-grade security and privacy controls.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Uploads Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="fw-bold">
+                        <span class="c-char">C</span>urrently Trending
+                    </h3>
+                    <a href="{{ url_for('resources') }}" class="btn btn-link">
+                        View All <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for resource in stats.recent_uploads[:6] %}
+            <div class="col-md-4 col-lg-2 mb-4">
+                <div class="resource-card h-100">
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% else %}badge-sample{% endif %}">
+                                {{ resource.resource_type|upper }}
+                            </span>
+                            <small class="text-muted">
+                                <i class="fas fa-download"></i> {{ resource.downloads }}
+                            </small>
+                        </div>
+                        <h6 class="fw-bold mb-2">{{ resource.title[:30] }}{% if resource.title|length > 30 %}...{% endif %}</h6>
+                        <small class="text-muted d-block mb-2">
+                            <i class="fas fa-book"></i> {{ resource.subject }}
+                        </small>
+                        <a href="{{ url_for('view_resource', resource_id=resource.id) }}" 
+                           class="btn btn-sm btn-outline-primary w-100">
+                            Explore
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Upload Section -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5><i class="fas fa-cloud-upload-alt"></i> Upload Materials</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('upload_files') }}" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="files" class="form-label">Select Files</label>
+                <input class="form-control" type="file" id="files" name="files" multiple>
+                <div class="form-text">Supported: PDF, DOC, JPG, PNG, PPT, ZIP (Max 50MB each)</div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (Optional)</label>
+                <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload Files
+            </button>
+            <a href="{{ url_for('view_uploads') }}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-list"></i> View Uploads
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<section class="py-5" style="background: var(--primary-gradient)">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-center text-lg-start text-white">
+                <h2 class="display-6 fw-bold mb-3">Ready to Transform Your Learning?</h2>
+                <p class="mb-0 opacity-90">Join thousands of successful students who are already using CypherLoom.</p>
+            </div>
+            <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5">
+                    <span class="c-char">C</span>reate Account
+                </a>
+                {% else %}
+                <a href="{{ url_for('upload') }}" class="btn btn-light btn-lg px-5">
+                    <i class="fas fa-plus me-2"></i>Contribute
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animated counter
+    document.addEventListener('DOMContentLoaded', function() {
+        const counters = document.querySelectorAll('.stats-counter');
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-count'));
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            let current = 0;
+            
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    counter.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            
+            // Start counter when in viewport
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    updateCounter();
+                    observer.unobserve(counter);
+                }
+            });
+            
+            observer.observe(counter);
+        });
+        
+        // Initialize feature slider
+        const sliderTrack = document.querySelector('.slider-track');
+        if (sliderTrack) {
+            // Pause animation on hover
+            sliderTrack.addEventListener('mouseenter', () => {
+                sliderTrack.style.animationPlayState = 'paused';
+            });
+            
+            sliderTrack.addEventListener('mouseleave', () => {
+                sliderTrack.style.animationPlayState = 'running';
+            });
+        }
+    });
+</script>
+{% endblock %}

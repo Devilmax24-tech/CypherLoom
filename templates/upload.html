@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Materials - Flask App{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-top: 20px;
+    }
+    
+    .upload-area {
+        border: 3px dashed #ccc;
+        border-radius: 10px;
+        padding: 50px 20px;
+        text-align: center;
+        background-color: #fafafa;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+    }
+    
+    .upload-area:hover {
+        border-color: #4361ee;
+        background-color: #f0f5ff;
+    }
+    
+    .upload-area.dragover {
+        border-color: #4361ee;
+        background-color: #e6f0ff;
+    }
+    
+    .upload-icon {
+        font-size: 48px;
+        color: #4361ee;
+        margin-bottom: 15px;
+    }
+    
+    .file-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 20px;
+    }
+    
+    .file-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .file-item:last-child {
+        border-bottom: none;
+    }
+    
+    .file-icon {
+        font-size: 24px;
+        margin-right: 10px;
+        color: #666;
+    }
+    
+    .file-info {
+        flex-grow: 1;
+    }
+    
+    .file-name {
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .file-size {
+        font-size: 12px;
+        color: #888;
+    }
+    
+    .upload-progress {
+        height: 8px;
+        margin-top: 10px;
+    }
+    
+    .btn-upload {
+        background: linear-gradient(135deg, #4361ee, #3f37c9);
+        border: none;
+        padding: 12px 30px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .btn-upload:hover {
+        background: linear-gradient(135deg, #3f37c9, #4361ee);
+    }
+    
+    .btn-upload:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .upload-status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="upload-container">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="mb-3"><i class="fas fa-cloud-upload-alt text-primary"></i> Upload Materials</h1>
+                <p class="text-muted">Upload documents, images, presentations, and other materials</p>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="uploadForm" method="POST" action="{{ url_for('upload_files') }}" enctype="multipart/form-data">
+                <!-- Upload Area -->
+                <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h4>Drag & Drop Files Here</h4>
+                    <p class="text-muted">or click to browse files</p>
+                    <p class="text-muted small">Supports: PDF, DOC, PPT, JPG, PNG, ZIP (Max: 16MB each)</p>
+                </div>
+
+                <!-- Hidden File Input -->
+                <input type="file" id="files" name="files" multiple style="display: none;" 
+                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar,.mp4,.mp3"
+                       onchange="updateFileList()">
+
+                <!-- File List -->
+                <div id="fileList" class="file-list"></div>
+
+                <!-- Additional Fields -->
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left"></i> Description (Optional)
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="3" placeholder="Add a description for these files..."></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="form-label">
+                            <i class="fas fa-folder"></i> Category
+                        </label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="general" selected>General</option>
+                            <option value="documents">Documents</option>
+                            <option value="images">Images</option>
+                            <option value="presentations">Presentations</option>
+                            <option value="videos">Videos</option>
+                            <option value="audio">Audio</option>
+                            <option value="archives">Archives</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="upload-progress progress" style="display: none;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%">
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div id="uploadStatus" class="upload-status"></div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFiles()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                    <button type="submit" id="uploadBtn" class="btn btn-upload" disabled>
+                        <i class="fas fa-upload"></i> Upload Files
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Recent Uploads -->
+        <div class="upload-container mt-4">
+            <h4><i class="fas fa-history"></i> Recent Uploads</h4>
+            {% if files %}
+                <div class="list-group mt-3">
+                    {% for file in files %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-file-{% if file.endswith('.pdf') %}pdf{% elif file.endswith(('.jpg', '.png', '.jpeg')) %}image{% elif file.endswith(('.doc', '.docx')) %}word{% elif file.endswith(('.ppt', '.pptx')) %}powerpoint{% else %}alt{% endif %} text-primary me-2"></i>
+                                    <span class="fw-medium">{{ file }}</span>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" 
+                                       class="btn btn-sm btn-outline-primary" download>
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No files uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // File list array
+    let selectedFiles = [];
+    
+    // Get file icon based on extension
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const icons = {
+            'pdf': 'file-pdf',
+            'jpg': 'file-image',
+            'jpeg': 'file-image',
+            'png': 'file-image',
+            'gif': 'file-image',
+            'doc': 'file-word',
+            'docx': 'file-word',
+            'txt': 'file-alt',
+            'ppt': 'file-powerpoint',
+            'pptx': 'file-powerpoint',
+            'xls': 'file-excel',
+            'xlsx': 'file-excel',
+            'zip': 'file-archive',
+            'rar': 'file-archive',
+            'mp4': 'file-video',
+            'mp3': 'file-audio'
+        };
+        return icons[ext] || 'file';
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Update file list display
+    function updateFileList() {
+        const fileInput = document.getElementById('files');
+        const fileListDiv = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        
+        selectedFiles = Array.from(fileInput.files);
+        fileListDiv.innerHTML = '';
+        
+        if (selectedFiles.length > 0) {
+            uploadBtn.disabled = false;
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <i class="fas fa-${getFileIcon(file.name)} file-icon"></i>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                fileListDiv.appendChild(fileItem);
+            });
+        } else {
+            uploadBtn.disabled = true;
+            fileListDiv.innerHTML = '<p class="text-muted text-center py-3">No files selected</p>';
+        }
+    }
+    
+    // Remove file from list
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        
+        // Update the file input
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('files').files = dataTransfer.files;
+        
+        updateFileList();
+    }
+    
+    // Clear all files
+    function clearFiles() {
+        selectedFiles = [];
+        document.getElementById('files').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('category').value = 'general';
+        updateFileList();
+    }
+    
+    // Drag and drop functionality
+    const dropArea = document.getElementById('dropArea');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('dragover');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('dragover');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        // Combine with existing files
+        const existingFiles = Array.from(document.getElementById('files').files);
+        const allFiles = [...existingFiles, ...files];
+        
+        // Update file input
+        const dataTransfer = new DataTransfer();
+        allFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('files').files = dataTransfer.files;
+        
+        updateFileList();
+    }
+    
+    // Form submission with AJAX
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = progressBar.parentElement;
+        const uploadStatus = document.getElementById('uploadStatus');
+        
+        // Show progress bar
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        uploadStatus.style.display = 'none';
+        
+        // Disable upload button
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        
+        try {
+            const response = await fetch('{{ url_for("upload_files") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Show success
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                progressBar.className = 'progress-bar bg-success progress-bar-striped progress-bar-animated';
+                
+                uploadStatus.className = 'upload-status alert alert-success';
+                uploadStatus.innerHTML = `
+                    <i class="fas fa-check-circle"></i> 
+                    ${result.message}
+                    <div class="mt-2">
+                        <a href="#" onclick="location.reload()" class="btn btn-sm btn-success">
+                            <i class="fas fa-sync"></i> Refresh Page
+                        </a>
+                    </div>
+                `;
+                uploadStatus.style.display = 'block';
+                
+                // Clear form after 2 seconds and refresh
+                setTimeout(() => {
+                    clearFiles();
+                    location.reload();
+                }, 2000);
+            } else {
+                throw new Error(result.error || 'Upload failed');
+            }
+        } catch (error) {
+            progressBar.className = 'progress-bar bg-danger progress-bar-striped progress-bar-animated';
+            progressBar.style.width = '100%';
+            progressBar.textContent = 'Error';
+            
+            uploadStatus.className = 'upload-status alert alert-danger';
+            uploadStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message}`;
+            uploadStatus.style.display = 'block';
+        } finally {
+            // Re-enable button after 3 seconds
+            setTimeout(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Files';
+                progressContainer.style.display = 'none';
+            }, 3000);
+        }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateFileList();
+    });
+</script>
+{% endblock %}
