@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Tracking - CypherLook{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-item {
+        border-left: 4px solid #e2e8f0;
+        padding-left: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .progress-item.completed {
+        border-left-color: var(--success-color);
+    }
+    .progress-item.in-progress {
+        border-left-color: var(--primary-color);
+    }
+    .progress-checkbox {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 fw-bold mb-2">Progress Tracking</h1>
+            <p class="text-muted mb-0">Track your study progress and completed topics</p>
+        </div>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="display-6 fw-bold text-primary">{{ total_topics }}</div>
+                            <p class="text-muted mb-0">Total Topics</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-6 fw-bold text-success">{{ completed_topics }}</div>
+                            <p class="text-muted mb-0">Completed</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-6 fw-bold text-warning">{{ "%.1f"|format(completion_rate) }}%</div>
+                            <p class="text-muted mb-0">Completion Rate</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Progress</span>
+                            <span>{{ "%.1f"|format(completion_rate) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ completion_rate }}%;" 
+                                 aria-valuenow="{{ completion_rate }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Progress Button -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addProgressModal">
+                        <i class="fas fa-plus me-2"></i>Add Progress
+                    </button>
+                    <p class="text-muted small text-center mt-3">
+                        Track new topics as you complete them
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">Your Progress</h5>
+                </div>
+                <div class="card-body">
+                    {% if progress %}
+                        {% for item in progress %}
+                        <div class="progress-item {% if item.completed %}completed{% else %}in-progress{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <form method="POST" action="{{ url_for('update_progress', progress_id=item.id) }}" class="me-3">
+                                            <input type="checkbox" 
+                                                   class="progress-checkbox" 
+                                                   {% if item.completed %}checked{% endif %}
+                                                   onchange="this.form.submit()">
+                                        </form>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ item.topic }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-book me-1"></i>{{ item.subject }}
+                                                {% if item.date_completed %}
+                                                • <i class="fas fa-calendar-check ms-2 me-1"></i>
+                                                Completed on {{ item.date_completed.strftime('%b %d, %Y') }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if item.notes %}
+                                    <div class="mt-2">
+                                        <p class="mb-0 text-muted small">{{ item.notes }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if item.score %}
+                                    <div class="mt-2">
+                                        <span class="badge bg-info">Score: {{ item.score }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    {% if item.completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">In Progress</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5 class="fw-bold mb-3">No progress tracked yet</h5>
+                        <p class="text-muted mb-4">Start tracking your study progress to see your growth</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProgressModal">
+                            <i class="fas fa-plus me-2"></i>Add Your First Progress
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Progress Modal -->
+<div class="modal fade" id="addProgressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Add Progress</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_progress') }}" id="progressForm" 
+            onsubmit="console.log('Submitting to:', this.action)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject" required 
+                               placeholder="e.g., Mathematics, Physics">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Topic</label>
+                        <input type="text" class="form-control" name="topic" required 
+                               placeholder="e.g., Integration, Thermodynamics">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" name="notes" rows="3" 
+                                  placeholder="Add any notes about this topic..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Progress</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
