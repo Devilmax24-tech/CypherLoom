@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Home-CypherLoom{% endblock %}
+{% block title %}Home - CypherLoom{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -11,6 +11,7 @@
         height: 100%;
         overflow: hidden;
         z-index: 1;
+        pointer-events: none; /* Prevent interfering with clicks */
     }
     
     .shape {
@@ -19,6 +20,7 @@
         opacity: 0.1;
         border-radius: 50%;
         animation: floatShape 20s infinite linear;
+        pointer-events: none; /* Prevent interfering with clicks */
     }
     
     .shape:nth-child(1) {
@@ -95,6 +97,66 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
+    
+    /* Fix for View All link */
+    .btn-link-fixed {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+    }
+    
+    .btn-link-fixed:hover {
+        color: #667eea;
+        transform: translateX(5px);
+    }
+    
+    /* Fix for Contribute button */
+    .btn-light-fixed {
+        background: white;
+        color: #333;
+        padding: 0.8rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-light-fixed:hover {
+        background: #f8f9fa;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        color: #333;
+        text-decoration: none;
+    }
+    
+    /* Ensure all links are clickable */
+    a, .btn, button {
+        cursor: pointer;
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Hero section fix */
+    .hero-section {
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Fix resource card buttons */
+    .resource-card .btn {
+        position: relative;
+        z-index: 5;
+    }
 </style>
 {% endblock %}
 
@@ -141,6 +203,11 @@
                     </div>
                 </div>
             </div>
+            <div class="col-lg-6">
+                <!-- Feature slider can go here if needed -->
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- Stats Section -->
@@ -240,7 +307,7 @@
                     <h3 class="fw-bold">
                         <span class="c-char">R</span>ecently Uploaded
                     </h3>
-                    <a href="{{ url_for('resources') }}" class="btn btn-link">
+                    <a href="{{ url_for('resources') }}" class="btn-link-fixed">
                         View All <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -275,7 +342,6 @@
         </div>
     </div>
 </section>
-   
 
 <!-- CTA Section -->
 <section class="py-5" style="background: var(--primary-gradient)">
@@ -287,11 +353,11 @@
             </div>
             <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
                 {% if not current_user.is_authenticated %}
-                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5">
+                <a href="{{ url_for('register') }}" class="btn btn-light-fixed btn-lg px-5">
                     <span class="c-char">C</span>reate Account
                 </a>
                 {% else %}
-                <a href="{{ url_for('resources') }}" class="btn btn-light btn-lg px-5">
+                <a href="{{ url_for('login') }}" class="btn btn-light-fixed btn-lg px-5">
                     <i class="fas fa-plus me-2"></i>Contribute
                 </a>
                 {% endif %}
@@ -345,6 +411,21 @@
                 sliderTrack.style.animationPlayState = 'running';
             });
         }
+        
+        // Debug: Log all buttons and links
+        console.log("All links on page:");
+        document.querySelectorAll('a').forEach(link => {
+            console.log(link.textContent.trim(), "=>", link.href);
+        });
     });
+    
+    // Debug function to test button clicks
+    function debugClick(event) {
+        console.log("Clicked:", event.target.tagName, event.target.className, event.target.href || event.target.getAttribute('onclick'));
+        return true;
+    }
+    
+    // Add click listeners for debugging
+    document.addEventListener('click', debugClick);
 </script>
 {% endblock %}
