@@ -319,3 +319,46 @@ if (document.readyState === 'loading') {
 function initAll() {
     performSearch();
 }
+
+
+// Navbar hide/show on scroll
+let lastScrollTop = 0;
+const navbar = document.querySelector('.navbar');
+
+window.addEventListener('scroll', function() {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (scrollTop > lastScrollTop && scrollTop > 100) {
+        // Scrolling down - hide navbar
+        navbar.classList.add('hidden');
+        navbar.classList.remove('visible');
+    } else {
+        // Scrolling up - show navbar
+        navbar.classList.remove('hidden');
+        navbar.classList.add('visible');
+    }
+    
+    lastScrollTop = scrollTop;
+});
+
+// Close mobile navbar when clicking a link
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+            const toggle = document.querySelector('.navbar-toggler');
+            toggle.click();
+        }
+    });
+});
+
+// Auto-hide flash messages after 5 seconds
+setTimeout(() => {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(message => {
+        message.style.opacity = '0';
+        setTimeout(() => {
+            message.remove();
+        }, 300);
+    });
+}, 5000);

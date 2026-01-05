@@ -9,14 +9,20 @@
             <!-- Profile Card -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body text-center">
-                    <!-- Edit Icon Button -->
-                    <div class="position-relative">
-                        <div class="avatar-xl mx-auto mb-3">
+                    <!-- Profile Picture -->
+                    <div class="position-relative mb-3">
+                        {% if user.profile_pic %}
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + user.profile_pic) }}" 
+                             alt="Profile Picture" 
+                             class="rounded-circle profile-pic-large">
+                        {% else %}
+                        <div class="avatar-placeholder mx-auto">
                             <i class="fas fa-user-circle fa-6x text-muted"></i>
-                            <button class="edit-profile-btn" onclick="toggleEditMode()">
-                                <i class="fas fa-user-edit"></i>
-                            </button>
                         </div>
+                        {% endif %}
+                        <button class="edit-profile-btn" onclick="toggleEditMode()">
+                            <i class="fas fa-user-edit"></i>
+                        </button>
                     </div>
                     
                     <h4 class="fw-bold mb-1">{{ user.full_name or user.username }}</h4>
@@ -39,6 +45,12 @@
                     <div class="text-muted small">
                         <i class="fas fa-envelope me-1"></i>{{ user.email }}
                     </div>
+                    
+                    {% if user.bio %}
+                    <div class="mt-3">
+                        <p class="small text-muted">{{ user.bio }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -48,19 +60,34 @@
                     <h6 class="fw-bold mb-3">Your Stats</h6>
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-number">{{ user.uploads|length }}</div>
-                            <div class="stat-label">Uploads</div>
+                            <div class="stat-number">
+                                {% if user.resources %}
+                                    {{ user.resources|length }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
+                            <div class="stat-label">Resources</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">{{ user.progress|selectattr('completed')|list|length }}</div>
+                            <div class="stat-number">
+                                {% if user.progress %}
+                                    {{ user.progress|selectattr('completed')|list|length }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
                             <div class="stat-label">Completed</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number">
-                                {% set total_time = user.progress|sum(attribute='time_spent') %}
-                                {{ total_time//60 }}h
+                                {% if user.progress %}
+                                    {{ user.progress|length }}
+                                {% else %}
+                                    0
+                                {% endif %}
                             </div>
-                            <div class="stat-label">Study Time</div>
+                            <div class="stat-label">Topics</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number">{{ user.created_at.strftime('%b %Y') }}</div>
@@ -76,25 +103,25 @@
             <div id="editProfileForm" class="card border-0 shadow-sm mb-4" style="display: none;">
                 <div class="card-body">
                     <h5 class="fw-bold mb-4">Edit Profile</h5>
-                    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data" id="profileForm">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Full Name</label>
                                 <input type="text" class="form-control" name="full_name" 
-                                       value="{{ user.full_name or '' }}">
+                                       value="{{ user.full_name or '' }}" required>
                             </div>
                             
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
                                 <input type="email" class="form-control" name="email" 
-                                       value="{{ user.email }}">
+                                       value="{{ user.email }}" required>
                             </div>
                             
                             <div class="col-md-6">
                                 <label class="form-label">Year</label>
                                 <select class="form-select" name="year">
                                     <option value="">Select Year</option>
-                                    {% for year in ['1st', '2nd', '3rd', '4th', '5th'] %}
+                                    {% for year in ['1st', '2nd', '3rd', '4th'] %}
                                     <option value="{{ year }}" {% if user.year == year %}selected{% endif %}>
                                         {{ year }} Year
                                     </option>
@@ -122,7 +149,8 @@
                             
                             <div class="col-12">
                                 <label class="form-label">Profile Picture</label>
-                                <input type="file" class="form-control" name="profile_pic" accept="image/*">
+                                <input type="file" class="form-control" name="profile_pic" accept="image/*" id="profilePicInput">
+                                <small class="text-muted">Max size: 2MB. Allowed: JPG, PNG, GIF</small>
                             </div>
                             
                             <div class="col-12">
@@ -130,7 +158,7 @@
                                     <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">
                                         Cancel
                                     </button>
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="saveBtn">
                                         Save Changes
                                     </button>
                                 </div>
@@ -144,51 +172,81 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold mb-0">Recent Activity</h5>
+                        <h5 class="fw-bold mb-0">Recent Progress</h5>
                         <button class="edit-profile-btn btn-sm" onclick="toggleEditMode()">
-                            <i class="fas fa-user-edit"></i>
+                            <i class="fas fa-user-edit"></i> Edit Profile
                         </button>
                     </div>
                     
-                    <div class="activity-timeline">
-                        {% if user.uploads %}
-                            {% for upload in user.uploads[:5] %}
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-upload text-primary"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <h6 class="fw-bold mb-1">Uploaded {{ upload.resource.title }}</h6>
-                                    <p class="text-muted small mb-0">
-                                        {{ upload.upload_date.strftime('%b %d, %Y at %I:%M %p') }}
-                                    </p>
-                                </div>
-                            </div>
-                            {% endfor %}
+             <!-- Recent Activity -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0">Recent Progress</h5>
+            <button class="edit-profile-btn btn-sm" onclick="toggleEditMode()">
+                <i class="fas fa-user-edit"></i> Edit Profile
+            </button>
+        </div>
+        
+        <div class="activity-timeline">
+            {% if recent_progress %}
+                {% for progress_item in recent_progress %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        {% if progress_item.completed %}
+                        <i class="fas fa-check-circle text-success"></i>
                         {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-history fa-2x text-muted mb-3"></i>
-                            <p class="text-muted">No activity yet</p>
-                        </div>
+                        <i class="fas fa-clock text-warning"></i>
                         {% endif %}
                     </div>
+                    <div class="activity-content">
+                        <h6 class="fw-bold mb-1">
+                            {{ progress_item.topic }} 
+                            <small class="text-muted">({{ progress_item.subject }})</small>
+                        </h6>
+                        <p class="text-muted small mb-0">
+                            {% if progress_item.created_at %}
+                            {{ progress_item.created_at.strftime('%b %d, %Y') }}
+                            {% else %}
+                            Recently added
+                            {% endif %}
+                            {% if progress_item.completed %}
+                            • <span class="text-success">Completed</span>
+                            {% else %}
+                            • <span class="text-warning">In Progress</span>
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-history fa-2x text-muted mb-3"></i>
+                <p class="text-muted">No progress tracked yet</p>
+                <a href="{{ url_for('progress') }}" class="btn btn-primary btn-sm">
+                    Start Tracking
+                </a>
             </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
             
             <!-- Progress Overview -->
             <div class="card border-0 shadow-sm mt-4">
                 <div class="card-body">
                     <h5 class="fw-bold mb-4">Learning Progress</h5>
-                    {% if user.progress %}
+                    
+                    {% if subject_stats %}
                         {% for subject, stats in subject_stats.items() %}
                         <div class="progress-item mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="fw-bold">{{ subject }}</span>
-                                <span>{{ stats.completed }}/{{ stats.total }}</span>
+                                <span>{{ stats.completed }}/{{ stats.total }} ({{ "%.0f"|format(stats.completion_rate) }}%)</span>
                             </div>
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar" role="progressbar" 
-                                     style="width: {{ (stats.completed / stats.total * 100) if stats.total > 0 else 0 }}%;">
+                                     style="width: {{ stats.completion_rate }}%;">
                                 </div>
                             </div>
                         </div>
@@ -209,16 +267,153 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .profile-pic-large {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .avatar-placeholder {
+        width: 150px;
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+    
+    .edit-profile-btn {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .edit-profile-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .edit-profile-btn.btn-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .activity-timeline {
+        border-left: 2px solid #e9ecef;
+        padding-left: 1.5rem;
+    }
+    
+    .activity-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .activity-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .activity-icon {
+        position: absolute;
+        left: -1.8rem;
+        top: 0;
+        width: 32px;
+        height: 32px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e9ecef;
+    }
+    
+    .progress-item {
+        padding: 0.5rem 0;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
     function toggleEditMode() {
         const form = document.getElementById('editProfileForm');
-        if (form.style.display === 'none') {
+        if (form.style.display === 'none' || !form.style.display) {
             form.style.display = 'block';
-            form.scrollIntoView({ behavior: 'smooth' });
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             form.style.display = 'none';
         }
     }
+    
+    // Preview profile picture before upload
+    document.getElementById('profilePicInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Create or update profile picture preview
+                const preview = document.querySelector('.profile-pic-large') || 
+                               document.querySelector('.avatar-placeholder');
+                if (preview) {
+                    if (preview.classList.contains('avatar-placeholder')) {
+                        preview.outerHTML = `<img src="${e.target.result}" 
+                                                  alt="Profile Preview" 
+                                                  class="rounded-circle profile-pic-large">`;
+                    } else {
+                        preview.src = e.target.result;
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Form submission with loading state
+    document.getElementById('profileForm').addEventListener('submit', function() {
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        saveBtn.disabled = true;
+    });
 </script>
 {% endblock %}

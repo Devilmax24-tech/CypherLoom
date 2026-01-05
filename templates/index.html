@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}CypherLoom - Smart Learning Platform{% endblock %}
+{% block title %}Home-CypherLoom{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -113,7 +113,7 @@
             <div class="col-lg-6">
                 <div class="hero-content">
                     <h1 class="hero-title fade-in-up">
-                        <span class="c-char">C</span>ypherLoom
+                        <span class="c-character">C</span>YPHERLOOM
                     </h1>
                     <p class="hero-subtitle fade-in-up" style="animation-delay: 0.2s">
                         Where <span class="cypher-text">C</span>onnections Create <span class="cypher-text">C</span>omprehension
@@ -141,44 +141,6 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="position-relative">
-                    <!-- Animated Feature Cards -->
-                    <div class="feature-slider mt-5 mt-lg-0">
-                        <div class="slider-track">
-                            {% for i in range(6) %}
-                            <div class="slider-item">
-                                <div class="grid-card">
-                                    <div class="icon">
-                                        <i class="fas fa-{{ ['book', 'graduation-cap', 'brain', 'chart-line', 'users', 'cloud-upload-alt'][i] }}"></i>
-                                    </div>
-                                    <h5>{{ ['Smart Notes', 'PYQ Archive', 'AI Insights', 'Progress Tracking', 'Community', 'Easy Upload'][i] }}</h5>
-                                    <p class="text-muted small">
-                                        {{ ['Curated study materials', 'Previous year questions', 'Personalized recommendations', 'Track your growth', 'Collaborate with peers', 'Share knowledge easily'][i] }}
-                                    </p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            <!-- Duplicate for infinite scroll -->
-                            {% for i in range(6) %}
-                            <div class="slider-item">
-                                <div class="grid-card">
-                                    <div class="icon">
-                                        <i class="fas fa-{{ ['book', 'graduation-cap', 'brain', 'chart-line', 'users', 'cloud-upload-alt'][i] }}"></i>
-                                    </div>
-                                    <h5>{{ ['Smart Notes', 'PYQ Archive', 'AI Insights', 'Progress Tracking', 'Community', 'Easy Upload'][i] }}</h5>
-                                    <p class="text-muted small">
-                                        {{ ['Curated study materials', 'Previous year questions', 'Personalized recommendations', 'Track your growth', 'Collaborate with peers', 'Share knowledge easily'][i] }}
-                                    </p>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </section>
 
 <!-- Stats Section -->
@@ -215,7 +177,7 @@
                 </h2>
                 <p class="text-muted">Everything you need for academic excellence</p>
             </div>
-        </div>
+        </div> 
         
         <div class="animated-grid">
             <div class="grid-card slide-in-left">
@@ -228,7 +190,7 @@
             
             <div class="grid-card fade-in-up" style="animation-delay: 0.2s">
                 <div class="icon">
-                    <i class="fas fa-chart-network"></i>
+                    <i class="fas fa-chart-bar"></i>
                 </div>
                 <h4>Progress Analytics</h4>
                 <p>Track your learning journey with detailed insights and personalized recommendations.</p>
@@ -276,7 +238,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center">
                     <h3 class="fw-bold">
-                        <span class="c-char">C</span>urrently Trending
+                        <span class="c-char">R</span>ecently Uploaded
                     </h3>
                     <a href="{{ url_for('resources') }}" class="btn btn-link">
                         View All <i class="fas fa-arrow-right"></i>
@@ -313,32 +275,7 @@
         </div>
     </div>
 </section>
-
-<!-- Upload Section -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h5><i class="fas fa-cloud-upload-alt"></i> Upload Materials</h5>
-    </div>
-    <div class="card-body">
-        <form action="{{ url_for('upload_files') }}" method="POST" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="files" class="form-label">Select Files</label>
-                <input class="form-control" type="file" id="files" name="files" multiple>
-                <div class="form-text">Supported: PDF, DOC, JPG, PNG, PPT, ZIP (Max 50MB each)</div>
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description (Optional)</label>
-                <textarea class="form-control" id="description" name="description" rows="2"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-upload"></i> Upload Files
-            </button>
-            <a href="{{ url_for('view_uploads') }}" class="btn btn-outline-secondary ms-2">
-                <i class="fas fa-list"></i> View Uploads
-            </a>
-        </form>
-    </div>
-</div>
+   
 
 <!-- CTA Section -->
 <section class="py-5" style="background: var(--primary-gradient)">
@@ -354,7 +291,7 @@
                     <span class="c-char">C</span>reate Account
                 </a>
                 {% else %}
-                <a href="{{ url_for('view_uploads') }}" class="btn btn-light btn-lg px-5">
+                <a href="{{ url_for('resources') }}" class="btn btn-light btn-lg px-5">
                     <i class="fas fa-plus me-2"></i>Contribute
                 </a>
                 {% endif %}

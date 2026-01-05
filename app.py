@@ -1,7 +1,7 @@
 import os
 import io
 import json
-from datetime import datetime
+from datetime import datetime,timezone
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -116,12 +116,12 @@ def get_drive_service():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
-        current_user.last_login = datetime.utcnow()
+        current_user.last_login = datetime.now(timezone.utc)
         db.session.commit()
 
 def allowed_file(filename):
@@ -251,46 +251,45 @@ def get_file(filename):
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        full_name = request.form.get('full_name', '')
-        year = request.form.get('year', '')
-        branch = request.form.get('branch', '')
+        confirm_password = request.form.get('confirm_password', '')
+        year = request.form['year']
+        branch = request.form['branch']
         
-        errors = []
+        # Validate password length
+        if len(password) < 5:
+            flash('Password must be at least 5 characters', 'danger')
+            return redirect(url_for('register'))
         
-        if User.query.filter_by(username=username).first():
-            errors.append('Username already exists!')
+        # Validate password match
+        if password != confirm_password:
+            flash('Passwords do not match', 'danger')
+            return redirect(url_for('register'))
         
-        if User.query.filter_by(email=email).first():
-            errors.append('Email already registered!')
+        # Check if user exists
+        user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if user:
+            flash('Username or email already exists', 'danger')
+            return redirect(url_for('register'))
         
-        if len(password) < 8:
-            errors.append('Password must be at least 8 characters')
+        # Create new user
+        hashed_password = generate_password_hash(password)
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            year=year,
+            branch=branch
+        )
         
-        if errors:
-            for error in errors:
-                flash(error, 'danger')
-        else:
-            user = User(
-                username=username,
-                email=email,
-                password_hash=generate_password_hash(password),
-                full_name=full_name,
-                year=year,
-                branch=branch
-            )
-            
-            db.session.add(user)
-            db.session.commit()
-            
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Registration successful! Please login.', 'success')
+        return redirect(url_for('login'))
     
     return render_template('register.html')
 
@@ -488,53 +487,166 @@ def download_resource(resource_id):
 @app.route('/progress')
 @login_required
 def progress():
-    user_progress = Progress.query.filter_by(user_id=current_user.id).all()
+    user_progress = Progress.query.filter_by(user_id=current_user.id).order_by(Progress.created_at.desc()).all()
     
-    # Statistics
-    total_topics = len(user_progress)
-    completed_topics = sum(1 for p in user_progress if p.completed)
-    total_time = sum(p.time_spent or 0 for p in user_progress)
-    completion_rate = round(completed_topics / total_topics * 100) if total_topics > 0 else 0
-    
-    # Group by subject
-    subject_stats = {}
-    for p in user_progress:
-        if p.subject not in subject_stats:
-            subject_stats[p.subject] = {'total': 0, 'completed': 0}
-        subject_stats[p.subject]['total'] += 1
-        if p.completed:
-            subject_stats[p.subject]['completed'] += 1
+    total_items = len(user_progress)
+    completed_items = sum(1 for item in user_progress if item.completed)
+    completion_rate = (completed_items / total_items * 100) if total_items > 0 else 0
     
     return render_template('progress.html',
-                         progress=user_progress,
-                         total_topics=total_topics,
-                         completed_topics=completed_topics,
-                         total_time=total_time,
-                         completion_rate=completion_rate,
-                         subject_stats=subject_stats)
+                         progress=user_progress,  # This is what the template uses
+                         total_items=total_items,  # Changed from total_topics
+                         completed_items=completed_items,  # Changed from completed_topics
+                         completion_rate=completion_rate)
+     
+
+@app.route('/mark_complete/<int:progress_id>', methods=['POST'])
+@login_required
+def mark_complete(progress_id):
+    # Get the progress item
+    progress_item = Progress.query.get_or_404(progress_id)
+    
+    # Check if the item belongs to current user
+    if progress_item.user_id != current_user.id:
+        abort(403)
+    
+    # Toggle completion status
+    progress_item.completed = not progress_item.completed
+    db.session.commit()
+    
+    flash('Progress updated!', 'success')
+    return redirect(url_for('progress'))
+
+@app.route('/add_progress', methods=['POST'])
+@login_required
+def add_progress():
+    try:
+        subject = request.form['subject']
+        topic = request.form['topic']
+        notes = request.form.get('notes', '')
+        
+        print(f"Received data - Subject: {subject}, Topic: {topic}")
+        
+        new_progress = Progress(
+            user_id=current_user.id,
+            subject=subject,
+            topic=topic,
+            notes=notes,
+            completed=False
+        )
+        
+        db.session.add(new_progress)
+        db.session.commit()
+        
+        flash('Progress added successfully!', 'success')
+        return redirect(url_for('progress'))
+    
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        db.session.rollback()
+        flash(f'Error adding progress: {str(e)}', 'danger')
+        return redirect(url_for('progress'))
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     if request.method == 'POST':
-        current_user.full_name = request.form.get('full_name', current_user.full_name)
-        current_user.email = request.form.get('email', current_user.email)
-        current_user.bio = request.form.get('bio', current_user.bio)
-        current_user.year = request.form.get('year', current_user.year)
-        current_user.branch = request.form.get('branch', current_user.branch)
-        
-        # Handle profile picture upload
-        if 'profile_pic' in request.files:
-            file = request.files['profile_pic']
-            if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                # Save logic here
+        try:
+            # Update user information
+            current_user.full_name = request.form.get('full_name', current_user.full_name)
+            current_user.email = request.form.get('email', current_user.email)
+            current_user.bio = request.form.get('bio', current_user.bio)
+            current_user.year = request.form.get('year', current_user.year)
+            current_user.branch = request.form.get('branch', current_user.branch)
+            current_user.updated_at = datetime.now(timezone.utc)
+            
+            # Handle profile picture upload
+            if 'profile_pic' in request.files:
+                file = request.files['profile_pic']
                 
-        db.session.commit()
-        flash('Profile updated successfully!', 'success')
+                # Check if file is selected
+                if file and file.filename != '':
+                    # Check file size
+                    file.seek(0, os.SEEK_END)
+                    file_length = file.tell()
+                    file.seek(0)
+                    
+                    if file_length > MAX_FILE_SIZE:
+                        flash('File size too large (max 2MB)', 'danger')
+                        return redirect(url_for('profile'))
+                    
+                    # Check file extension
+                    if allowed_file(file.filename):
+                        # Generate unique filename
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{current_user.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+                        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+                        
+                        # Save the file
+                        file.save(filepath)
+                        
+                        # Delete old profile picture if exists
+                        if current_user.profile_pic and current_user.profile_pic != 'default.jpg':
+                            old_filepath = os.path.join(UPLOAD_FOLDER, current_user.profile_pic)
+                            if os.path.exists(old_filepath):
+                                os.remove(old_filepath)
+                        
+                        # Update user's profile picture path
+                        current_user.profile_pic = unique_filename
+                    else:
+                        flash('Allowed file types: png, jpg, jpeg, gif', 'danger')
+                        return redirect(url_for('profile'))
+            
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error updating profile: {str(e)}")
+            flash(f'Error updating profile: {str(e)}', 'danger')
+        
         return redirect(url_for('profile'))
     
-    return render_template('profile.html', user=current_user)
+    # GET request - render profile page
+    # Get user's progress
+    user_progress = Progress.query.filter_by(user_id=current_user.id).all()
+    
+    # Calculate subject statistics
+    subject_stats = {}
+    for item in user_progress:
+        if item.subject not in subject_stats:
+            subject_stats[item.subject] = {
+                'total': 0,
+                'completed': 0,
+                'completion_rate': 0
+            }
+        subject_stats[item.subject]['total'] += 1
+        if item.completed:
+            subject_stats[item.subject]['completed'] += 1
+    
+    # Calculate completion rates
+    for subject in subject_stats:
+        stats = subject_stats[subject]
+        if stats['total'] > 0:
+            stats['completion_rate'] = (stats['completed'] / stats['total']) * 100
+    
+    # Get recent progress items (last 5)
+    recent_progress = []
+    if user_progress:
+        # Sort by created_at (handle None values)
+        sorted_progress = sorted(
+            user_progress, 
+            key=lambda x: x.created_at if x.created_at else datetime.min.replace(tzinfo=timezone.utc), 
+            reverse=True
+        )
+        recent_progress = sorted_progress[:5]
+    
+    return render_template('profile.html', 
+                         user=current_user,
+                         subject_stats=subject_stats,
+                         recent_progress=recent_progress)
+
+
 
 @app.route('/api/search_suggestions')
 @login_required

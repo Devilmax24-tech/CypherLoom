@@ -3,10 +3,23 @@
 {% block title %}Register - CypherLoom{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+    <!-- Background Image -->
+    <img src="{{ url_for('static', filename='image/login.jpg') }}" 
+         alt=""
+         style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            border-radius: 10px;
+         ">
+<div class="container py-5" style="position: relative;">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
                 <div class="card-body p-4">
                     <div class="text-center mb-4">
                         <h1 class="h3 fw-bold">
@@ -15,21 +28,28 @@
                         <p class="text-muted">Join CypherLoom today</p>
                     </div>
                     
-                    <form method="POST" action="{{ url_for('register') }}">
-                        <div class="mb-3">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" name="full_name" 
-                                   placeholder="Enter your full name">
-                        </div>
-                        
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('register') }}" id="registerForm" onsubmit="return validatePassword()">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <input type="text" class="form-control" name="username" 
-                                   placeholder="Choose a username" required>
+                                   placeholder="Choose a username" required
+                                   minlength="3" maxlength="20">
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">Email Address</label>
+                            <label class="form-label">Email </label>
                             <input type="email" class="form-control" name="email" 
                                    placeholder="Enter your email" required>
                         </div>
@@ -38,36 +58,54 @@
                             <label class="form-label">Password</label>
                             <div class="input-group">
                                 <input type="password" class="form-control" name="password" 
-                                       placeholder="Create a password" required id="password">
+                                       placeholder="Create a password" required id="password"
+                                       minlength="5">
                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
-                            <small class="text-muted">Must be at least 8 characters</small>
+                            <div id="passwordError" class="text-danger small mt-1" style="display: none;">
+                                Password must be at least 5 characters
+                            </div>
+                            <small class="text-muted">Must be at least 5 characters</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="confirm_password" 
+                                       placeholder="Confirm password" required id="confirmPassword">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleConfirmPassword()">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div id="confirmPasswordError" class="text-danger small mt-1" style="display: none;">
+                                Passwords do not match
+                            </div>
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Year</label>
-                            <select class="form-select" name="year">
-                                <option value="">Select Year</option>
+                            <select class="form-select" name="year" required>
+                                <option value="" selected disabled>Select Year</option>
                                 <option value="1st">1st Year</option>
                                 <option value="2nd">2nd Year</option>
                                 <option value="3rd">3rd Year</option>
                                 <option value="4th">4th Year</option>
-                                <option value="5th">5th Year</option>
                             </select>
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Branch</label>
-                            <select class="form-select" name="branch">
-                                <option value="">Select Branch</option>
+                            <select class="form-select" name="branch" required>
+                                <option value="" selected disabled>Select Branch</option>
                                 <option value="CSE">Computer Science</option>
+                                <option value="AI_ML">AI/ML</option>
                                 <option value="ECE">Electronics</option>
                                 <option value="EEE">Electrical</option>
                                 <option value="ME">Mechanical</option>
                                 <option value="CE">Civil</option>
-                                <option value="IT">Information Technology</option>
+                                <option value="BIOTECH">Biotech</option>
                             </select>
                         </div>
                         
@@ -107,5 +145,74 @@
             icon.classList.add('fa-eye');
         }
     }
+    
+    function toggleConfirmPassword() {
+        const confirmInput = document.getElementById('confirmPassword');
+        const icon = event.currentTarget.querySelector('i');
+        
+        if (confirmInput.type === 'password') {
+            confirmInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            confirmInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    
+    function validatePassword() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const passwordError = document.getElementById('passwordError');
+        const confirmError = document.getElementById('confirmPasswordError');
+        let isValid = true;
+        
+        // Reset errors
+        passwordError.style.display = 'none';
+        confirmError.style.display = 'none';
+        
+        // Check password length
+        if (password.length < 5) {
+            passwordError.style.display = 'block';
+            passwordError.textContent = 'Password must be at least 5 characters';
+            isValid = false;
+        }
+        
+        // Check password match
+        if (password !== confirmPassword) {
+            confirmError.style.display = 'block';
+            confirmError.textContent = 'Passwords do not match';
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    // Real-time validation
+    document.getElementById('password').addEventListener('input', function() {
+        const password = this.value;
+        const errorDiv = document.getElementById('passwordError');
+        
+        if (password.length < 5 && password.length > 0) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Password must be at least 5 characters';
+        } else {
+            errorDiv.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = this.value;
+        const errorDiv = document.getElementById('confirmPasswordError');
+        
+        if (password !== confirmPassword && confirmPassword.length > 0) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Passwords do not match';
+        } else {
+            errorDiv.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}

@@ -40,11 +40,11 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 text-center">
-                            <div class="display-6 fw-bold text-primary">{{ total_topics }}</div>
+                            <div class="display-6 fw-bold text-primary">{{ total_items }}</div>
                             <p class="text-muted mb-0">Total Topics</p>
                         </div>
                         <div class="col-md-4 text-center">
-                            <div class="display-6 fw-bold text-success">{{ completed_topics }}</div>
+                            <div class="display-6 fw-bold text-success">{{ completed_items }}</div>
                             <p class="text-muted mb-0">Completed</p>
                         </div>
                         <div class="col-md-4 text-center">
@@ -101,7 +101,8 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-1">
-                                        <form method="POST" action="{{ url_for('update_progress', progress_id=item.id) }}" class="me-3">
+                                        <!-- CHANGE THIS FORM: Use mark_complete instead of update_progress -->
+                                        <form method="POST" action="{{ url_for('mark_complete', progress_id=item.id) }}" class="me-3">
                                             <input type="checkbox" 
                                                    class="progress-checkbox" 
                                                    {% if item.completed %}checked{% endif %}
@@ -111,9 +112,9 @@
                                             <h6 class="mb-0 fw-bold">{{ item.topic }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-book me-1"></i>{{ item.subject }}
-                                                {% if item.date_completed %}
+                                                {% if item.completed %}
                                                 • <i class="fas fa-calendar-check ms-2 me-1"></i>
-                                                Completed on {{ item.date_completed.strftime('%b %d, %Y') }}
+                                                Completed on {{ item.created_at.strftime('%b %d, %Y') }}
                                                 {% endif %}
                                             </small>
                                         </div>
@@ -122,12 +123,6 @@
                                     {% if item.notes %}
                                     <div class="mt-2">
                                         <p class="mb-0 text-muted small">{{ item.notes }}</p>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    {% if item.score %}
-                                    <div class="mt-2">
-                                        <span class="badge bg-info">Score: {{ item.score }}</span>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -166,7 +161,7 @@
                 <h5 class="modal-title fw-bold">Add Progress</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('progress') }}">
+            <form method="POST" action="{{ url_for('add_progress') }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Subject</label>
