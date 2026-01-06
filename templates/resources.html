@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <style>
+    /* Your existing CSS - keep as is */
     .filter-section {
         background: var(--card-bg);
         border-radius: 15px;
@@ -15,7 +16,7 @@
     
     .resource-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1.5rem;
     }
     
@@ -25,7 +26,7 @@
         align-items: center;
         margin-top: auto;
         padding-top: 1rem;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .year-select-wrapper {
@@ -38,13 +39,14 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: white;
+        background: var(--card-bg);
         border-radius: 10px;
         box-shadow: var(--shadow-lg);
         z-index: 1000;
         max-height: 300px;
         overflow-y: auto;
         display: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .search-results.show {
@@ -54,13 +56,13 @@
     
     .search-result-item {
         padding: 0.75rem 1rem;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         cursor: pointer;
         transition: background-color 0.2s;
     }
     
     .search-result-item:hover {
-        background-color: #f8fafc;
+        background-color: rgba(255, 255, 255, 0.05);
     }
     
     @keyframes slideDown {
@@ -71,6 +73,281 @@
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+    
+    /* NEW: Small cards CSS */
+    .resource-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 1.2rem;
+    }
+    
+    .resource-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+    }
+    
+    .resource-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    
+    .badge-notes { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+    .badge-pyq { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+    .badge-sample_paper { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
+    .badge-books { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+    .badge-general { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
+    
+    /* NEW: File icon in cards */
+    .file-icon {
+        font-size: 36px;
+        color: var(--primary-color);
+        opacity: 0.8;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    /* NEW: Compact title and subject */
+    .compact-title {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        color: white;
+    }
+    
+    .compact-subject {
+        font-size: 14px;
+        color: #aaa;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* NEW: Compact stats */
+    .compact-stats {
+        display: flex;
+        gap: 12px;
+        font-size: 13px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .compact-stats span {
+        color: #888;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* NEW: Button styles */
+    .btn-view-compact {
+        background: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+        border: 1px solid rgba(52, 152, 219, 0.3);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        transition: all 0.3s;
+        flex: 1;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-view-compact:hover {
+        background: #3498db;
+        color: white;
+        border-color: #3498db;
+        text-decoration: none;
+    }
+    
+    .btn-download-compact {
+        background: rgba(46, 204, 113, 0.15);
+        color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.3);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        transition: all 0.3s;
+        flex: 1;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-download-compact:hover {
+        background: #2ecc71;
+        color: white;
+        border-color: #2ecc71;
+        text-decoration: none;
+    }
+    
+    /* NEW: Small filter button */
+    .btn-filter-small {
+        padding: 8px 20px;
+        font-size: 14px;
+        min-width: 120px;
+    }
+    
+    /* NEW: Dark cross sign clear button */
+    .btn-clear-dark {
+        background: transparent;
+        color: #2c3e50;
+        border: 2px solid #2c3e50;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        margin-left: 10px;
+    }
+    
+    .btn-clear-dark:hover {
+        background: #2c3e50;
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    /* NEW: Button container */
+    .filter-buttons-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    /* NEW: Sort dropdown styling */
+    .sort-dropdown .btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ddd;
+    }
+    
+    .sort-dropdown .btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary-color);
+    }
+    
+    .sort-dropdown .dropdown-menu {
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sort-dropdown .dropdown-item {
+        color: #ddd;
+    }
+    
+    .sort-dropdown .dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    .sort-dropdown .dropdown-item.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    /* NEW: Active filter indicator */
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+        align-items: center;
+    }
+    
+    .filter-tag {
+        background: rgba(0, 212, 255, 0.1);
+        color: #00d4ff;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .filter-tag .remove-tag {
+        cursor: pointer;
+        font-size: 12px;
+        opacity: 0.7;
+    }
+    
+    .filter-tag .remove-tag:hover {
+        opacity: 1;
+    }
+    
+    /* NEW: Responsive adjustments */
+    @media (max-width: 768px) {
+        .resource-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .filter-buttons-container {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        
+        .btn-filter-small {
+            min-width: 100px;
+        }
+        
+        .btn-clear-dark {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .resource-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .compact-stats {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .active-filters {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .filter-buttons-container {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-filter-small, .btn-clear-dark {
+            width: 100%;
         }
     }
 </style>
@@ -92,6 +369,49 @@
         </div>
     </div>
 
+    <!-- Active Filters Display -->
+    {% if search or resource_type or branch_filter or semester_filter or year_filter or subject_filter %}
+    <div class="active-filters mb-3">
+        <span class="text-muted">Active filters:</span>
+        {% if search %}
+        <span class="filter-tag">
+            Search: "{{ search }}"
+            <span class="remove-tag" onclick="removeFilter('search')">×</span>
+        </span>
+        {% endif %}
+        {% if resource_type %}
+        <span class="filter-tag">
+            Type: {{ resource_type|upper }}
+            <span class="remove-tag" onclick="removeFilter('resource_type')">×</span>
+        </span>
+        {% endif %}
+        {% if branch_filter %}
+        <span class="filter-tag">
+            Branch: {{ branch_filter }}
+            <span class="remove-tag" onclick="removeFilter('branch')">×</span>
+        </span>
+        {% endif %}
+        {% if semester_filter %}
+        <span class="filter-tag">
+            Semester: {{ semester_filter }}
+            <span class="remove-tag" onclick="removeFilter('semester')">×</span>
+        </span>
+        {% endif %}
+        {% if year_filter %}
+        <span class="filter-tag">
+            Year: {{ year_filter }}
+            <span class="remove-tag" onclick="removeFilter('year')">×</span>
+        </span>
+        {% endif %}
+        {% if subject_filter %}
+        <span class="filter-tag">
+            Subject: {{ subject_filter }}
+            <span class="remove-tag" onclick="removeFilter('subject')">×</span>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Search and Filters -->
     <div class="filter-section">
         <form id="resourceSearchForm" method="GET" action="{{ url_for('resources') }}" class="row g-3">
@@ -102,7 +422,7 @@
                     <input type="text" 
                            class="search-input" 
                            name="search" 
-                           placeholder="Search by title, subject, or keywords..."
+                           placeholder="Search PYQs, notes, books by subject, branch or semester..."
                            value="{{ search }}"
                            autocomplete="off">
                     <div class="search-results"></div>
@@ -110,11 +430,10 @@
             </div>
             
             <div class="col-md-3">
-                <select class="form-select" name="resource_type">
+                <select class="form-select" name="resource_type" id="resourceType">
                     <option value="">All Types</option>
                     <option value="notes" {% if resource_type == 'notes' %}selected{% endif %}>Notes</option>
                     <option value="pyq" {% if resource_type == 'pyq' %}selected{% endif %}>PYQ</option>
-                    <option value="sample_paper" {% if resource_type == 'sample_paper' %}selected{% endif %}>Sample Papers</option>
                     <option value="books" {% if resource_type == 'books' %}selected{% endif %}>Books</option>
                 </select>
             </div>
@@ -123,7 +442,7 @@
                 <select class="form-select" name="branch">
                     <option value="">All Branches</option>
                     {% for branch in branches %}
-                    <option value="{{ branch }}" {% if branch == branch %}selected{% endif %}>{{ branch }}</option>
+                    <option value="{{ branch }}" {% if branch_filter == branch %}selected{% endif %}>{{ branch }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -132,14 +451,14 @@
                 <select class="form-select" name="semester">
                     <option value="">All Semesters</option>
                     {% for semester in semesters %}
-                    <option value="{{ semester }}" {% if semester == semester %}selected{% endif %}>Semester {{ semester }}</option>
+                    <option value="{{ semester }}" {% if semester_filter == semester %}selected{% endif %}>Semester {{ semester }}</option>
                     {% endfor %}
                 </select>
             </div>
             
             <!-- Year Selection (Conditional) -->
-            <div class="col-md-3 year-select-wrapper" {% if resource_type != 'pyq' %}style="display: none;"{% endif %}>
-                <select class="form-select" name="year">
+            <div class="col-md-3 year-select-wrapper" id="yearWrapper" style="display: {% if resource_type == 'pyq' %}block{% else %}none{% endif %};">
+                <select class="form-select" name="year" id="yearSelect">
                     <option value="">Select Year</option>
                     {% for year in years %}
                     <option value="{{ year }}" {% if year_filter == year|string %}selected{% endif %}>{{ year }}</option>
@@ -151,41 +470,49 @@
                 <select class="form-select" name="subject">
                     <option value="">All Subjects</option>
                     {% for subject in subjects %}
-                    <option value="{{ subject }}" {% if subject == subject %}selected{% endif %}>{{ subject }}</option>
+                    <option value="{{ subject }}" {% if subject_filter == subject %}selected{% endif %}>{{ subject }}</option>
                     {% endfor %}
                 </select>
             </div>
             
-            <div class="col-md-12 text-end">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter me-2"></i>Apply Filters
-                </button>
-                <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
-                    Clear All
-                </button>
+            <div class="col-md-12">
+                <div class="filter-buttons-container">
+                    <button type="submit" class="btn btn-primary btn-filter-small">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+                    {% if search or resource_type or branch_filter or semester_filter or year_filter or subject_filter %}
+                    <button type="button" class="btn-clear-dark" onclick="resetFilters()" title="Clear all filters">
+                        ×
+                    </button>
+                    {% endif %}
+                </div>
             </div>
         </form>
     </div>
 
-    <!-- Resources Count -->
+    <!-- Resources Count and Sort -->
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <p class="mb-0">
+                    {% if resources.total > 0 %}
                     Found <strong>{{ resources.total }}</strong> resources
                     {% if search %}
                     for "<strong>{{ search }}</strong>"
                     {% endif %}
+                    {% else %}
+                    <span class="text-warning">No results found</span>
+                    {% endif %}
                 </p>
-                <div class="dropdown">
+                <div class="sort-dropdown dropdown">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        Sort by: {{ request.args.get('sort', 'Recent') }}
+                        <i class="fas fa-sort me-2"></i>Sort: {{ sort_by|title }}
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="?sort=recent">Most Recent</a></li>
-                        <li><a class="dropdown-item" href="?sort=downloads">Most Downloads</a></li>
-                        <li><a class="dropdown-item" href="?sort=views">Most Views</a></li>
-                        <li><a class="dropdown-item" href="?sort=rating">Highest Rated</a></li>
+                        <li><a class="dropdown-item {% if sort_by == 'recent' %}active{% endif %}" href="{{ update_sort_url('recent') }}">Most Recent</a></li>
+                        <li><a class="dropdown-item {% if sort_by == 'downloads' %}active{% endif %}" href="{{ update_sort_url('downloads') }}">Most Downloads</a></li>
+                        <li><a class="dropdown-item {% if sort_by == 'views' %}active{% endif %}" href="{{ update_sort_url('views') }}">Most Views</a></li>
+                        <li><a class="dropdown-item {% if sort_by == 'rating' %}active{% endif %}" href="{{ update_sort_url('rating') }}">Highest Rated</a></li>
                     </ul>
                 </div>
             </div>
@@ -197,74 +524,78 @@
         {% if resources.items %}
             {% for resource in resources.items %}
             <div class="resource-card">
-                <div class="p-3">
-                    <!-- Resource Type Badge -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="resource-badge badge-{{ resource.resource_type }}">
-                            {{ resource.resource_type|upper }}
-                        </span>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ resource.upload_date.strftime('%b %d') }}
-                        </small>
-                    </div>
+                <!-- File Icon -->
+                <div class="file-icon">
+                    {% if resource.resource_type == 'pyq' %}
+                        <i class="fas fa-file-pdf"></i>
+                    {% elif resource.resource_type == 'notes' %}
+                        <i class="fas fa-file-alt"></i>
+                    {% elif resource.resource_type == 'books' %}
+                        <i class="fas fa-book"></i>
+                    {% elif resource.resource_type == 'sample_paper' %}
+                        <i class="fas fa-clipboard-list"></i>
+                    {% else %}
+                        <i class="fas fa-file"></i>
+                    {% endif %}
+                </div>
+                
+                <!-- Resource Type Badge -->
+                <span class="resource-badge badge-{{ resource.resource_type }}">
+                    {{ resource.resource_type|upper }}
+                </span>
+                
+                <!-- Resource Title -->
+                <h5 class="compact-title">{{ resource.title }}</h5>
+                
+                <!-- Subject -->
+                <div class="compact-subject">
+                    <i class="fas fa-book me-1"></i>{{ resource.subject }}
+                </div>
+                
+                <!-- Metadata -->
+                <div class="compact-stats">
+                    {% if resource.branch %}
+                    <span>
+                        <i class="fas fa-code-branch"></i> {{ resource.branch }}
+                    </span>
+                    {% endif %}
                     
-                    <!-- Resource Title -->
-                    <h5 class="fw-bold mb-2">{{ resource.title }}</h5>
+                    {% if resource.semester %}
+                    <span>
+                        <i class="fas fa-layer-group"></i> Sem {{ resource.semester }}
+                    </span>
+                    {% endif %}
                     
-                    <!-- Description -->
-                    <p class="text-muted small mb-3">
-                        {{ resource.description|truncate(80) }}
-                    </p>
-                    
-                    <!-- Metadata -->
-                    <div class="mb-3">
-                        <div class="d-flex flex-wrap gap-2 mb-2">
-                            {% if resource.branch %}
-                            <span class="badge bg-light text-dark">
-                                <i class="fas fa-code-branch me-1"></i>{{ resource.branch }}
-                            </span>
-                            {% endif %}
-                            
-                            {% if resource.semester %}
-                            <span class="badge bg-light text-dark">
-                                <i class="fas fa-layer-group me-1"></i>Sem {{ resource.semester }}
-                            </span>
-                            {% endif %}
-                            
-                            {% if resource.year %}
-                            <span class="badge bg-light text-dark">
-                                <i class="fas fa-calendar-alt me-1"></i>{{ resource.year }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="text-muted small">
-                            <i class="fas fa-book me-1"></i>{{ resource.subject }}
-                        </div>
-                    </div>
-                    
-                    <!-- Stats and Actions -->
-                    <div class="resource-meta">
-                        <div>
-                            <small class="text-muted me-3">
-                                <i class="fas fa-download"></i> {{ resource.downloads }}
-                            </small>
-                            <small class="text-muted">
-                                <i class="fas fa-eye"></i> {{ resource.views }}
-                            </small>
-                        </div>
-                        <div class="btn-group">
-                            <a href="{{ url_for('view_resource', resource_id=resource.id) }}" 
-                               class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
-                            <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="fas fa-download"></i>
-                            </a>
-                        </div>
-                    </div>
+                    {% if resource.year %}
+                    <span>
+                        <i class="fas fa-calendar-alt"></i> {{ resource.year }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Stats -->
+                <div class="compact-stats">
+                    <span>
+                        <i class="fas fa-download"></i> {{ resource.downloads }}
+                    </span>
+                    <span>
+                        <i class="fas fa-eye"></i> {{ resource.views }}
+                    </span>
+                    <span>
+                        <i class="fas fa-clock"></i> {{ resource.upload_date.strftime('%b %d, %Y') }}
+                    </span>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('view_resource', resource_id=resource.id) }}" 
+                       class="btn-view-compact" target="_blank">
+                        <i class="fas fa-eye me-1"></i> View
+                    </a>
+                    <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                       class="btn-download-compact">
+                        <i class="fas fa-download me-1"></i> Download
+                    </a>
                 </div>
             </div>
             {% endfor %}
@@ -274,12 +605,17 @@
                 <i class="fas fa-search fa-3x text-muted mb-3"></i>
                 <h4 class="fw-bold mb-3">No resources found</h4>
                 <p class="text-muted mb-4">
-                    {% if search or resource_type or branch or semester or year_filter or subject %}
-                        Try adjusting your search criteria
+                    {% if search or resource_type or branch_filter or semester_filter or year_filter or subject_filter %}
+                        No matches found for your search criteria. Try adjusting your filters.
                     {% else %}
                         No resources have been uploaded yet. Be the first to contribute!
                     {% endif %}
                 </p>
+                {% if search or resource_type or branch_filter or semester_filter or year_filter or subject_filter %}
+                <button class="btn btn-primary" onclick="resetFilters()">
+                    <i class="fas fa-times me-2"></i>Clear All Filters
+                </button>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -291,7 +627,7 @@
         <ul class="pagination justify-content-center">
             {% if resources.has_prev %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('resources', page=resources.prev_num, search=search, resource_type=resource_type, branch=branch, semester=semester, year_filter=year_filter, subject=subject) }}">
+                <a class="page-link" href="{{ update_page_url(resources.prev_num) }}">
                     <i class="fas fa-chevron-left"></i>
                 </a>
             </li>
@@ -300,7 +636,7 @@
             {% for page_num in resources.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
                 {% if page_num %}
                     <li class="page-item {% if page_num == resources.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('resources', page=page_num, search=search, resource_type=resource_type, branch=branch, semester=semester, year_filter=year_filter, subject=subject) }}">
+                        <a class="page-link" href="{{ update_page_url(page_num) }}">
                             {{ page_num }}
                         </a>
                     </li>
@@ -311,7 +647,7 @@
             
             {% if resources.has_next %}
             <li class="page-item">
-                <a class="page-link" href="{{ url_for('resources', page=resources.next_num, search=search, resource_type=resource_type, branch=branch, semester=semester, year_filter=year_filter, subject=subject) }}">
+                <a class="page-link" href="{{ update_page_url(resources.next_num) }}">
                     <i class="fas fa-chevron-right"></i>
                 </a>
             </li>
@@ -324,10 +660,11 @@
 
 {% block extra_js %}
 <script>
-    // Dynamic year selector
+    // Show/hide year selector based on resource type
     document.addEventListener('DOMContentLoaded', function() {
-        const resourceTypeSelect = document.querySelector('select[name="resource_type"]');
-        const yearWrapper = document.querySelector('.year-select-wrapper');
+        const resourceTypeSelect = document.getElementById('resourceType');
+        const yearWrapper = document.getElementById('yearWrapper');
+        const yearSelect = document.getElementById('yearSelect');
         
         if (resourceTypeSelect && yearWrapper) {
             resourceTypeSelect.addEventListener('change', function() {
@@ -340,6 +677,7 @@
                     yearWrapper.style.opacity = '0';
                     setTimeout(() => {
                         yearWrapper.style.display = 'none';
+                        yearSelect.value = '';
                     }, 300);
                 }
             });
@@ -366,7 +704,7 @@
                         .then(data => {
                             if (data.length > 0) {
                                 searchResults.innerHTML = data.map(item => `
-                                    <div class="search-result-item" onclick="selectSearchResult('${item.title}', ${item.id})">
+                                    <div class="search-result-item" onclick="selectSearchResult(${item.id})">
                                         <div class="fw-bold">${item.title}</div>
                                         <small class="text-muted">${item.subject} • ${item.type}</small>
                                     </div>
@@ -388,7 +726,7 @@
             });
         }
         
-        // Real-time form submission on filter change
+        // Auto-submit form on filter change
         const form = document.getElementById('resourceSearchForm');
         if (form) {
             const inputs = form.querySelectorAll('select');
@@ -397,15 +735,46 @@
                     form.submit();
                 });
             });
+            
+            // Also submit on search enter
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    form.submit();
+                }
+            });
         }
     });
     
-    function selectSearchResult(title, id) {
+    function selectSearchResult(id) {
         window.location.href = `/resource/${id}`;
     }
     
     function resetFilters() {
         window.location.href = "{{ url_for('resources') }}";
     }
+    
+    function removeFilter(filterName) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.delete(filterName);
+        window.location.href = `/resources?${urlParams.toString()}`;
+    }
+    
+    // These functions need to be defined in your Flask template or passed as variables
+    function update_sort_url(sort) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('sort', sort);
+        return `/resources?${urlParams.toString()}`;
+    }
+    
+    function update_page_url(page) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        return `/resources?${urlParams.toString()}`;
+    }
+    
+    // Make these available globally
+    window.update_sort_url = update_sort_url;
+    window.update_page_url = update_page_url;
 </script>
 {% endblock %}

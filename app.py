@@ -13,6 +13,7 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from sqlalchemy import desc, or_
 import time
 from flask import send_from_directory
+from urllib.parse import urlencode
 
 from config import Config
 
@@ -351,6 +352,30 @@ def dashboard():
                          recent_progress=recent_progress,
                          recommended=recommended)
 
+# Add this context processor function to your app.py
+@app.context_processor
+def utility_processor():
+    def update_sort_url(sort_value):
+        args = request.args.copy()
+        args['sort'] = sort_value
+        if 'page' in args:
+            del args['page']
+        return f'/resources?{urlencode(args)}'
+    
+    def update_page_url(page_num):
+        args = request.args.copy()
+        args['page'] = page_num
+        return f'/resources?{urlencode(args)}'
+    
+    def get_page_url(page_num):
+        return update_page_url(page_num)
+    
+    return dict(
+        update_sort_url=update_sort_url,
+        update_page_url=update_page_url,
+        get_page_url=get_page_url
+    )
+
 @app.route('/resources')
 @login_required
 def resources():
@@ -360,6 +385,7 @@ def resources():
     semester = request.args.get('semester', '')
     year_filter = request.args.get('year', '')
     subject = request.args.get('subject', '')
+    sort_by = request.args.get('sort', 'recent')
     
     query = Resource.query.filter_by(is_approved=True)
     
@@ -388,11 +414,22 @@ def resources():
     if subject:
         query = query.filter_by(subject=subject)
     
+    # ========== ADD THIS SORTING LOGIC ==========
+    # Apply sorting based on sort_by parameter
+    if sort_by == 'downloads':
+        query = query.order_by(desc(Resource.downloads))
+    elif sort_by == 'views':
+        query = query.order_by(desc(Resource.views))
+    elif sort_by == 'rating':
+        query = query.order_by(desc(Resource.rating))
+    else:  # 'recent' is default
+        query = query.order_by(desc(Resource.upload_date))
+    # ============================================
+    
     # Get resources with pagination
     page = request.args.get('page', 1, type=int)
     per_page = 12
-    resources_paginated = query.order_by(desc(Resource.upload_date))\
-        .paginate(page=page, per_page=per_page, error_out=False)
+    resources_paginated = query.paginate(page=page, per_page=per_page, error_out=False)  # REMOVE .order_by() from here
     
     # Get unique values for filters
     branches = db.session.query(Resource.branch).distinct().filter(Resource.branch.isnot(None)).all()
@@ -404,10 +441,11 @@ def resources():
                          resources=resources_paginated,
                          search=search,
                          resource_type=resource_type,
-                         branch=branch,
-                         semester=semester,
+                         branch_filter=branch,
+                         semester_filter=semester,
+                         sort_by=sort_by,  # Make sure this is included
                          year_filter=year_filter,
-                         subject=subject,
+                         subject_filter=subject,
                          branches=[b[0] for b in branches],
                          semesters=[s[0] for s in semesters],
                          subjects=[s[0] for s in subjects],
