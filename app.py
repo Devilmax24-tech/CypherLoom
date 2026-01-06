@@ -800,27 +800,29 @@ def admin_upload():
             category = request.form.get('category', 'notes')
             subject = request.form.get('subject', 'General')
             description = request.form.get('description', '')
+            year = request.form.get('year', datetime.now().year)  # ADD THIS
             
             # Get file size
             file_size = os.path.getsize(file_path)
             
-            # Create Resource database record
+            # Create Resource database record - USE CORRECT FIELD NAMES!
             resource = Resource(
-                title=filename,
-                original_filename=filename,
-                stored_filename=new_filename,
-                file_path=file_path,
-                file_type=file.content_type,
-                file_size=file_size,
-                user_id=current_user.id,
+                title=filename,  # CORRECT: exists in your model
+                file_name=new_filename,  # CORRECT: not stored_filename!
+                file_type=file.content_type,  # CORRECT: exists
+                file_size=str(file_size),  # CORRECT: convert to string!
+                uploader_id=current_user.id,  # CORRECT: not user_id!
                 subject=subject,
                 branch=branch,
                 semester=semester,
                 resource_type=category,
                 description=description,
+                year=int(year) if year else datetime.now().year,  # ADD THIS
                 is_approved=True,
                 upload_date=datetime.now(),
                 downloads=0
+                # REMOVED: original_filename, stored_filename, file_path, user_id
+                # These don't exist in your model!
             )
             
             # Add to database session
@@ -828,9 +830,12 @@ def admin_upload():
             uploaded_count += 1
     
     # Commit all database changes
-    db.session.commit()
+    if uploaded_count > 0:
+        db.session.commit()
+        flash(f'Uploaded {uploaded_count} file(s) to database!', 'success')
+    else:
+        flash('No files were uploaded', 'error')
     
-    flash(f'Uploaded {uploaded_count} file(s)', 'success')
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
 @app.route('/admin/delete/user/<int:user_id>', methods=['POST'])
