@@ -745,10 +745,13 @@ def admin_portal():
                 
                 # Get modification date
                 timestamp = os.path.getmtime(file_path)
-                file_dates[file] = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M')
+                file_dates[file] = datetime.fromtimestamp(timestamp).strftime('%Y-%m-d %H:%M')
     
     # File download counts (you need to implement this tracking)
     file_downloads = {}  # Implement tracking logic
+    
+    # ============ ADD THIS LINE ============
+    current_year = datetime.now().year
     
     return render_template('upload.html',
                          stats={
@@ -761,7 +764,9 @@ def admin_portal():
                          all_files=all_files,
                          file_sizes=file_sizes,
                          file_dates=file_dates,
-                         file_downloads=file_downloads)
+                         file_downloads=file_downloads,
+                         # ============ ADD THIS LINE ============
+                         current_year=current_year)
 
 @app.route('/admin/upload', methods=['POST'])
 @login_required
