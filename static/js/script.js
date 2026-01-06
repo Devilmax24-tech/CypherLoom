@@ -362,3 +362,109 @@ setTimeout(() => {
         }, 300);
     });
 }, 5000);
+
+
+// PDF Viewer functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const pdfViewer = document.getElementById('pdfViewer');
+    const pdfLoading = document.getElementById('pdfLoading');
+    const noPreview = document.getElementById('noPreview');
+    
+    if (pdfViewer) {
+        pdfViewer.onload = function() {
+            pdfLoading.style.display = 'none';
+            pdfViewer.style.display = 'block';
+            initPDFViewer();
+        };
+        
+        pdfViewer.onerror = function() {
+            pdfLoading.style.display = 'none';
+            noPreview.style.display = 'block';
+        };
+        
+        setTimeout(function() {
+            if (pdfLoading && pdfLoading.style.display !== 'none') {
+                pdfLoading.style.display = 'none';
+                if (noPreview) noPreview.style.display = 'block';
+            }
+        }, 10000);
+    }
+});
+
+let currentZoom = 1;
+
+function initPDFViewer() {
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer) {
+        currentZoom = 1;
+        viewer.style.transform = 'scale(1)';
+        viewer.style.transformOrigin = 'top left';
+    }
+}
+
+function zoomIn() {
+    currentZoom += 0.1;
+    updateZoom();
+}
+
+function zoomOut() {
+    if (currentZoom > 0.2) {
+        currentZoom -= 0.1;
+        updateZoom();
+    }
+}
+
+function updateZoom() {
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer) {
+        viewer.style.transform = `scale(${currentZoom})`;
+        viewer.style.transformOrigin = 'top left';
+    }
+}
+
+function fitToWidth() {
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer) {
+        currentZoom = 1;
+        viewer.style.transform = 'scale(1)';
+        viewer.style.width = '100%';
+    }
+}
+
+function fullscreen() {
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer) {
+        if (viewer.requestFullscreen) viewer.requestFullscreen();
+        else if (viewer.webkitRequestFullscreen) viewer.webkitRequestFullscreen();
+        else if (viewer.msRequestFullscreen) viewer.msRequestFullscreen();
+    }
+}
+
+function printPDF() {
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer) {
+        const printWindow = window.open(viewer.src, '_blank');
+        if (printWindow) printWindow.onload = function() { printWindow.print(); };
+    }
+}
+
+function shareResource() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ resource.title }}',
+            text: 'Check out this resource on CypherLoom',
+            url: window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+    }
+}
+
+function addToBookmarks() {
+    alert('Added to bookmarks!');
+}
+
+function reportResource() {
+    alert('Report submitted!');
+}

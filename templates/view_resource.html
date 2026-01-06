@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-4">
                         <div>
-                            <span class="badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% else %}badge-sample{% endif %} me-2">
+                            <span class="badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% elif resource.resource_type == 'books' %}badge-books{% else %}badge-sample{% endif %} me-2">
                                 {{ resource.resource_type|upper }}
                             </span>
                             {% if resource.year %}
@@ -101,23 +101,75 @@
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div class="d-flex gap-3">
+                    <div class="d-flex gap-3 action-buttons-pdf">
                         <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
                            class="btn btn-primary btn-lg px-4">
                             <i class="fas fa-download me-2"></i>Download Now
                         </a>
                         
-                        {% if resource.file_id %}
-                        <a href="https://drive.google.com/file/d/{{ resource.file_id }}/view" 
-                           class="btn btn-outline-primary btn-lg px-4" target="_blank">
-                            <i class="fas fa-external-link-alt me-2"></i>Preview
-                        </a>
-                        {% endif %}
-                        
                         <button class="btn btn-outline-secondary btn-lg px-4" onclick="shareResource()">
                             <i class="fas fa-share-alt me-2"></i>Share
                         </button>
                     </div>
+                    
+                    <!-- PDF Viewer Section -->
+                    {% if resource.file_name and resource.file_name.endswith('.pdf') %}
+                    <div class="mt-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
+                        </h5>
+                        
+                        <!-- PDF Viewer -->
+                        <div class="pdf-viewer-container">
+                            <div id="pdfLoading" class="pdf-loading">
+                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                <p>Loading PDF preview...</p>
+                            </div>
+                            
+                            <iframe id="pdfViewer" class="pdf-frame" 
+                                    src="{{ url_for('get_file', filename=resource.file_name) }}#toolbar=0&navpanes=0&scrollbar=0"
+                                    style="display: none;">
+                            </iframe>
+                            
+                            <div id="noPreview" class="no-preview" style="display: none;">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <h5>PDF Preview Not Available</h5>
+                                <p class="text-muted">Please download the file to view it</p>
+                            </div>
+                        </div>
+                        
+                        <!-- PDF Actions -->
+                        <div class="pdf-actions">
+                            <button class="btn-pdf-action" onclick="zoomIn()">
+                                <i class="fas fa-search-plus me-1"></i> Zoom In
+                            </button>
+                            <button class="btn-pdf-action" onclick="zoomOut()">
+                                <i class="fas fa-search-minus me-1"></i> Zoom Out
+                            </button>
+                            <button class="btn-pdf-action" onclick="fitToWidth()">
+                                <i class="fas fa-arrows-alt-h me-1"></i> Fit Width
+                            </button>
+                            <button class="btn-pdf-action" onclick="fullscreen()">
+                                <i class="fas fa-expand me-1"></i> Fullscreen
+                            </button>
+                            <button class="btn-pdf-action" onclick="printPDF()">
+                                <i class="fas fa-print me-1"></i> Print
+                            </button>
+                        </div>
+                    </div>
+                    {% elif not resource.file_id %}
+                    <div class="mt-4">
+                        <div class="no-preview">
+                            <i class="fas fa-cloud-download-alt fa-3x text-primary mb-3"></i>
+                            <h5>Download Required</h5>
+                            <p class="text-muted mb-3">This file needs to be downloaded to view</p>
+                            <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-download me-2"></i>Download to View
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -152,48 +204,22 @@
             <!-- Uploader Info -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3">Uploaded By</h6>
-                    <div class="d-flex align-items-center">
+                    <h6 class="fw-bold mb-3">About This Resource</h6>
+                    <div class="d-flex align-items-center mb-3">
                         <div class="avatar me-3">
                             <i class="fas fa-user-circle fa-2x text-muted"></i>
                         </div>
                         <div>
                             <p class="mb-0 fw-bold">{{ resource.uploader.username if resource.uploader else 'System' }}</p>
-                            <small class="text-muted">
-                                Member since {{ resource.uploader.created_at.strftime('%Y') if resource.uploader else '' }}
-                            </small>
+                            <small class="text-muted">Uploaded by</small>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- File Details -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">File Details</h6>
-                    <div class="info-list">
-                        <div class="info-item">
-                            <i class="fas fa-file text-primary"></i>
-                            <span>File Name</span>
-                            <strong>{{ resource.file_name }}</strong>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-expand-alt text-success"></i>
-                            <span>Format</span>
-                            <strong>{{ resource.file_type|upper }}</strong>
-                        </div>
-                        {% if resource.file_size %}
-                        <div class="info-item">
-                            <i class="fas fa-weight text-warning"></i>
-                            <span>Size</span>
-                            <strong>{{ resource.file_size }}</strong>
-                        </div>
-                        {% endif %}
-                        <div class="info-item">
-                            <i class="fas fa-database text-info"></i>
-                            <span>Storage</span>
-                            <strong>Google Drive</strong>
-                        </div>
+                    
+                    <div class="mt-3">
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This resource is verified and ready for download.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -209,45 +235,13 @@
                         <button class="btn btn-outline-success" onclick="reportResource()">
                             <i class="fas fa-flag me-2"></i>Report Issue
                         </button>
-                        <button class="btn btn-outline-warning" onclick="suggestEdit()">
-                            <i class="fas fa-edit me-2"></i>Suggest Edit
-                        </button>
+                        <a href="{{ url_for('resources') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-search me-2"></i>Find Similar
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    function shareResource() {
-        if (navigator.share) {
-            navigator.share({
-                title: '{{ resource.title }}',
-                text: 'Check out this resource on CypherLoom',
-                url: window.location.href
-            });
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert('Link copied to clipboard!');
-        }
-    }
-    
-    function addToBookmarks() {
-        // Implement bookmark functionality
-        alert('Added to bookmarks!');
-    }
-    
-    function reportResource() {
-        // Implement report functionality
-        alert('Report submitted!');
-    }
-    
-    function suggestEdit() {
-        // Implement edit suggestion
-        alert('Edit suggestion sent!');
-    }
-</script>
 {% endblock %}
