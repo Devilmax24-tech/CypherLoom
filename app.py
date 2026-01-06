@@ -784,8 +784,46 @@ def admin_upload():
             filename = secure_filename(file.filename)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             new_filename = f"{timestamp}_{filename}"
-            file.save(os.path.join(UPLOAD_FOLDER, new_filename))
+            file_path = os.path.join(UPLOAD_FOLDER, new_filename)
+            
+            # Save file to folder
+            file.save(file_path)
+            
+            # Get form data for Resource record
+            branch = request.form.get('branch', 'general')
+            semester = request.form.get('semester', '1')
+            category = request.form.get('category', 'notes')
+            subject = request.form.get('subject', 'General')
+            description = request.form.get('description', '')
+            
+            # Get file size
+            file_size = os.path.getsize(file_path)
+            
+            # Create Resource database record
+            resource = Resource(
+                title=filename,
+                original_filename=filename,
+                stored_filename=new_filename,
+                file_path=file_path,
+                file_type=file.content_type,
+                file_size=file_size,
+                user_id=current_user.id,
+                subject=subject,
+                branch=branch,
+                semester=semester,
+                resource_type=category,
+                description=description,
+                is_approved=True,
+                upload_date=datetime.now(),
+                downloads=0
+            )
+            
+            # Add to database session
+            db.session.add(resource)
             uploaded_count += 1
+    
+    # Commit all database changes
+    db.session.commit()
     
     flash(f'Uploaded {uploaded_count} file(s)', 'success')
     return redirect(f'/{ADMIN_SECRET_PATH}')

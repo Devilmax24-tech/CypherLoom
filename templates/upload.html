@@ -185,6 +185,36 @@
         color: white;
         box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
     }
+    
+    /* New styles for branch/semester/subject fields */
+    .metadata-fields {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .path-preview {
+        background: rgba(0, 212, 255, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        border-left: 4px solid #00d4ff;
+        font-family: monospace;
+        font-size: 14px;
+        color: #00d4ff;
+        word-break: break-all;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #ff416c;
+    }
+    
+    .form-label i {
+        margin-right: 8px;
+        width: 20px;
+    }
 </style>
 {% endblock %}
 
@@ -225,12 +255,125 @@
                 </div>
             </div>
 
-            <!-- Section 1: File Upload (Your original upload form enhanced) -->
+            <!-- Section 1: File Upload with Metadata -->
             <div class="admin-card">
                 <h3><i class="fas fa-cloud-upload-alt"></i> Upload Materials</h3>
                 <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
+                    
+                    <!-- Hidden fields for database (will be set by JavaScript) -->
+                    <input type="hidden" id="formBranch" name="branch" value="general">
+                    <input type="hidden" id="formSemester" name="semester" value="1">
+                    <input type="hidden" id="formSubject" name="subject" value="General">
+                    
+                    <!-- Metadata Fields -->
+                    <div class="metadata-fields">
+                        <h5><i class="fas fa-tags"></i> File Information</h5>
+                        
+                        <div class="row mt-3">
+                            <!-- Branch Selection -->
+                            <div class="col-md-4 mb-3">
+                                <label for="branchSelect" class="form-label required-field">
+                                    <i class="fas fa-code-branch"></i> Branch
+                                </label>
+                                <select class="form-select" id="branchSelect" required>
+                                    <option value="">Select Branch</option>
+                                    <option value="cse">Computer Science (CSE)</option>
+                                    <option value="aiml">Artificial Intelligence (AIML)</option>
+                                    <option value="ece">Electronics & Communication (ECE)</option>
+                                    <option value="ee">Electrical Engineering (EE)</option>
+                                    <option value="civil">Civil Engineering</option>
+                                    <option value="mech">Mechanical Engineering</option>
+                                    <option value="biotech">Biotechnology</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Semester Selection -->
+                            <div class="col-md-4 mb-3">
+                                <label for="semesterSelect" class="form-label required-field">
+                                    <i class="fas fa-graduation-cap"></i> Semester
+                                </label>
+                                <select class="form-select" id="semesterSelect" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="4">Semester 4</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="8">Semester 8</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Category Selection -->
+                            <div class="col-md-4 mb-3">
+                                <label for="category" class="form-label required-field">
+                                    <i class="fas fa-folder"></i> Material Type
+                                </label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Type</option>
+                                    <option value="pyq">Previous Year Papers (PYQ)</option>
+                                    <option value="notes">Study Notes</option>
+                                    <option value="books">Books</option>
+                                    <option value="projects">Projects</option>
+                                    <option value="lab">Lab Manuals</option>
+                                    <option value="syllabus">Syllabus</option>
+                                    <option value="general">General</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Subject Input -->
+                            <div class="col-md-8 mb-3">
+                                <label for="subjectInput" class="form-label required-field">
+                                    <i class="fas fa-book"></i> Subject Name
+                                </label>
+                                <input type="text" class="form-control" id="subjectInput" 
+                                       placeholder="Enter subject name (e.g., Data Structures, Calculus)" 
+                                       required>
+                                <div class="form-text">
+                                    Type subject name manually. Suggestions will appear.
+                                </div>
+                                <div id="subjectSuggestions" class="mt-2" style="display: none;">
+                                    <!-- Suggestions will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <!-- Academic Year -->
+                            <div class="col-md-4 mb-3">
+                                <label for="year" class="form-label">
+                                    <i class="fas fa-calendar"></i> Academic Year
+                                </label>
+                                <select class="form-select" id="year" name="year">
+                                    {% set current_year = now().year %}
+                                    {% for year in range(current_year, current_year-5, -1) %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                        {{ year }}-{{ year+1 }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left"></i> Description (Optional)
+                            </label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="2" placeholder="Additional details about these files..."></textarea>
+                        </div>
+                        
+                        <!-- Path Preview -->
+                        <div class="path-preview">
+                            <div class="text-muted mb-1">Files will be saved in:</div>
+                            <div id="pathDisplay">/uploads/[branch]/sem[number]/[type]/[subject]/</div>
+                        </div>
+                    </div>
+
                     <!-- Upload Area -->
-                    <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
+                    <div class="upload-area mt-4" id="dropArea" onclick="document.getElementById('files').click()">
                         <div class="upload-icon">
                             <i class="fas fa-cloud-upload-alt"></i>
                         </div>
@@ -247,29 +390,6 @@
                     <!-- File List -->
                     <div id="fileList" class="file-list"></div>
 
-                    <!-- Additional Fields -->
-                    <div class="row mt-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="description" class="form-label">
-                                <i class="fas fa-align-left"></i> Description (Optional)
-                            </label>
-                            <textarea class="form-control" id="description" name="description" 
-                                      rows="3" placeholder="Add a description for these files..."></textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="category" class="form-label">
-                                <i class="fas fa-folder"></i> Category
-                            </label>
-                            <select class="form-select" id="category" name="category">
-                                <option value="notes">Study Notes</option>
-                                <option value="pyq">Previous Year Papers</option>
-                                <option value="books">Books</option>
-                                <option value="projects">Projects</option>
-                                <option value="general">General</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <!-- Progress Bar -->
                     <div class="upload-progress progress" style="display: none;">
                         <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
@@ -282,7 +402,7 @@
 
                     <!-- Buttons -->
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-light" onclick="clearFiles()">
+                        <button type="button" class="btn btn-outline-light" onclick="clearAll()">
                             <i class="fas fa-times"></i> Clear All
                         </button>
                         <button type="submit" id="uploadBtn" class="btn btn-admin" disabled>
@@ -321,7 +441,7 @@
                                             <i class="fas fa-download"></i>
                                         </a>
                                         <form action="{{ url_for('delete_file', filename=file) }}" method="POST" 
-                                              style="display:inline;" onsubmit="return confirm('Delete {{ file }}?')">
+                                              style="display: inline;" onsubmit="return confirm('Delete {{ file }}?')">
                                             <button type="submit" class="btn btn-sm btn-danger-admin">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -374,7 +494,7 @@
                                 <td>
                                     {% if not user.is_admin %}
                                     <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" 
-                                          style="display:inline;" onsubmit="return confirm('Delete user {{ user.username }}?')">
+                                          style="display: inline;" onsubmit="return confirm('Delete user {{ user.username }}?')">
                                         <button type="submit" class="btn btn-sm btn-danger-admin">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
@@ -423,8 +543,134 @@
 
 {% block extra_js %}
 <script>
+    // Common subjects for suggestions
+    const commonSubjects = [
+        "Data Structures", "Algorithms", "Database Management", 
+        "Operating Systems", "Computer Networks", "Software Engineering",
+        "Artificial Intelligence", "Machine Learning", "Calculus",
+        "Linear Algebra", "Physics", "Chemistry", "Digital Electronics",
+        "Microprocessors", "Signals and Systems", "Control Systems",
+        "Thermodynamics", "Fluid Mechanics", "Structural Analysis",
+        "Biochemistry", "Genetics", "Environmental Engineering",
+        "Discrete Mathematics", "Object Oriented Programming",
+        "Computer Organization", "Theory of Computation",
+        "Compiler Design", "Computer Graphics", "Web Technology",
+        "Mobile Application Development", "Cloud Computing",
+        "Cyber Security", "Data Mining", "Big Data Analytics"
+    ];
+    
     // File list array
     let selectedFiles = [];
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateFileList();
+        updatePathPreview();
+        
+        // Add event listeners for metadata fields
+        document.getElementById('branchSelect').addEventListener('change', updateMetadata);
+        document.getElementById('semesterSelect').addEventListener('change', updateMetadata);
+        document.getElementById('category').addEventListener('change', updateMetadata);
+        document.getElementById('subjectInput').addEventListener('input', function() {
+            updateMetadata();
+            showSubjectSuggestions(this.value);
+        });
+        
+        // Add event listener for subject input blur
+        document.getElementById('subjectInput').addEventListener('blur', function() {
+            setTimeout(() => {
+                document.getElementById('subjectSuggestions').style.display = 'none';
+            }, 200);
+        });
+    });
+    
+    // Update hidden form fields and path preview
+    function updateMetadata() {
+        const branch = document.getElementById('branchSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        const category = document.getElementById('category').value;
+        const subject = document.getElementById('subjectInput').value;
+        
+        // Update hidden fields
+        document.getElementById('formBranch').value = branch;
+        document.getElementById('formSemester').value = semester;
+        document.getElementById('formSubject').value = subject;
+        
+        // Update path preview
+        updatePathPreview();
+        
+        // Enable/disable upload button
+        checkUploadReady();
+    }
+    
+    // Update path preview display
+    function updatePathPreview() {
+        const branch = document.getElementById('branchSelect').value || '[branch]';
+        const semester = document.getElementById('semesterSelect').value || '[number]';
+        const category = document.getElementById('category').value || '[type]';
+        const subject = document.getElementById('subjectInput').value || '[subject]';
+        
+        // Clean subject for folder name
+        const cleanSubject = subject.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+        
+        const path = `/uploads/${branch}/sem${semester}/${category}/${cleanSubject}/`;
+        document.getElementById('pathDisplay').textContent = path;
+    }
+    
+    // Show subject suggestions
+    function showSubjectSuggestions(input) {
+        const suggestionsDiv = document.getElementById('subjectSuggestions');
+        
+        if (!input || input.length < 2) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+        
+        const inputLower = input.toLowerCase();
+        const filtered = commonSubjects.filter(subject => 
+            subject.toLowerCase().includes(inputLower)
+        ).slice(0, 5);
+        
+        if (filtered.length > 0) {
+            let html = '<div class="list-group">';
+            filtered.forEach(subject => {
+                html += `
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="selectSubject('${subject}')">
+                        ${subject}
+                    </button>
+                `;
+            });
+            html += '</div>';
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+        } else {
+            suggestionsDiv.style.display = 'none';
+        }
+    }
+    
+    // Select a suggested subject
+    function selectSubject(subject) {
+        document.getElementById('subjectInput').value = subject;
+        document.getElementById('formSubject').value = subject;
+        document.getElementById('subjectSuggestions').style.display = 'none';
+        updatePathPreview();
+        checkUploadReady();
+    }
+    
+    // Check if ready to upload
+    function checkUploadReady() {
+        const branch = document.getElementById('branchSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        const category = document.getElementById('category').value;
+        const subject = document.getElementById('subjectInput').value;
+        const hasFiles = selectedFiles.length > 0;
+        
+        const isReady = branch && semester && category && subject && hasFiles;
+        document.getElementById('uploadBtn').disabled = !isReady;
+    }
     
     // Get file icon based on extension
     function getFileIcon(filename) {
@@ -463,14 +709,11 @@
     function updateFileList() {
         const fileInput = document.getElementById('files');
         const fileListDiv = document.getElementById('fileList');
-        const uploadBtn = document.getElementById('uploadBtn');
         
         selectedFiles = Array.from(fileInput.files);
         fileListDiv.innerHTML = '';
         
         if (selectedFiles.length > 0) {
-            uploadBtn.disabled = false;
-            
             selectedFiles.forEach((file, index) => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
@@ -489,9 +732,10 @@
                 fileListDiv.appendChild(fileItem);
             });
         } else {
-            uploadBtn.disabled = true;
             fileListDiv.innerHTML = '<p class="text-muted text-center py-3">No files selected</p>';
         }
+        
+        checkUploadReady();
     }
     
     // Remove file from list
@@ -506,13 +750,24 @@
         updateFileList();
     }
     
-    // Clear all files
-    function clearFiles() {
+    // Clear all fields
+    function clearAll() {
         selectedFiles = [];
         document.getElementById('files').value = '';
+        document.getElementById('branchSelect').value = '';
+        document.getElementById('semesterSelect').value = '';
+        document.getElementById('category').value = '';
+        document.getElementById('subjectInput').value = '';
         document.getElementById('description').value = '';
-        document.getElementById('category').value = 'notes';
+        document.getElementById('year').value = new Date().getFullYear();
+        
+        // Clear hidden fields
+        document.getElementById('formBranch').value = 'general';
+        document.getElementById('formSemester').value = '1';
+        document.getElementById('formSubject').value = 'General';
+        
         updateFileList();
+        updatePathPreview();
     }
     
     // Drag and drop functionality
@@ -565,6 +820,22 @@
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Validate required fields
+        const branch = document.getElementById('branchSelect').value;
+        const semester = document.getElementById('semesterSelect').value;
+        const category = document.getElementById('category').value;
+        const subject = document.getElementById('subjectInput').value;
+        
+        if (!branch || !semester || !category || !subject) {
+            alert('Please fill all required fields: Branch, Semester, Type, and Subject');
+            return;
+        }
+        
+        if (selectedFiles.length === 0) {
+            alert('Please select at least one file to upload');
+            return;
+        }
+        
         const formData = new FormData(this);
         const uploadBtn = document.getElementById('uploadBtn');
         const progressBar = document.getElementById('progressBar');
@@ -596,7 +867,7 @@
                 uploadStatus.className = 'upload-status alert alert-success';
                 uploadStatus.innerHTML = `
                     <i class="fas fa-check-circle"></i> 
-                    Files uploaded successfully!
+                    Files uploaded successfully to database!
                     <div class="mt-2">
                         <a href="#" onclick="location.reload()" class="btn btn-sm btn-success">
                             <i class="fas fa-sync"></i> Refresh Page
@@ -607,11 +878,11 @@
                 
                 // Clear form after 2 seconds and refresh
                 setTimeout(() => {
-                    clearFiles();
+                    clearAll();
                     location.reload();
                 }, 2000);
             } else {
-                throw new Error('Upload failed');
+                throw new Error('Upload failed. Please try again.');
             }
         } catch (error) {
             progressBar.className = 'progress-bar bg-danger progress-bar-striped progress-bar-animated';
@@ -629,11 +900,6 @@
                 progressContainer.style.display = 'none';
             }, 3000);
         }
-    });
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        updateFileList();
     });
 </script>
 {% endblock %}
