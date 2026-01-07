@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, or_, func
 from urllib.parse import urlencode
 
 from config import Config
@@ -332,7 +332,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
-# Update your dashboard route in app.py to match your template
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -386,7 +385,6 @@ def dashboard():
                          total_views=total_views,
                          today_uploads=today_uploads)
 
-
 @app.context_processor
 def utility_processor():
     def update_sort_url(sort_value):
@@ -414,7 +412,7 @@ def utility_processor():
 @login_required
 def resources():
     search = request.args.get('search', '').strip()
-    resource_type = request.args.get('resource_type', '')  # Changed from 'type'
+    resource_type = request.args.get('resource_type', '')
     branch = request.args.get('branch', '')
     semester = request.args.get('semester', '')
     year_filter = request.args.get('year', '')
@@ -503,6 +501,32 @@ def resources():
                          subjects=[s[0] for s in subjects if s[0]],
                          types=[t[0] for t in types if t[0]],
                          years=[y[0] for y in years if y[0]])
+
+# ============== MISSING ROUTE - ADD THIS ==============
+@app.route('/resource/<int:resource_id>')
+@login_required
+def view_resource(resource_id):
+    """View a single resource - THIS WAS MISSING!"""
+    resource = Resource.query.get_or_404(resource_id)
+    
+    if not resource.is_approved:
+        abort(404)
+    
+    # Increment view count
+    resource.views += 1
+    db.session.commit()
+    
+    # Get related resources
+    related_resources = Resource.query.filter(
+        Resource.id != resource.id,
+        Resource.is_approved == True,
+        Resource.subject == resource.subject
+    ).limit(4).all()
+    
+    return render_template('view_resource.html',
+                         resource=resource,
+                         related_resources=related_resources)
+# ============== END OF MISSING ROUTE ==============
 
 @app.route('/download/<int:resource_id>')
 @login_required
@@ -831,7 +855,7 @@ def admin_portal():
                              'today_uploads': 0
                          },
                          users=users,
-                         all_resources=all_resources[:50],  # Pass resources to template
+                         all_resources=all_resources[:50],
                          current_year=current_year)
 
 @app.route('/admin/upload', methods=['POST'])
@@ -847,10 +871,10 @@ def admin_upload():
     files = request.files.getlist('files')
     uploaded_count = 0
     
-    # Get form data - FIXED: Using correct field names
+    # Get form data
     branch = request.form.get('formBranch', 'General')
     semester = request.form.get('formSemester', '1')
-    resource_type = request.form.get('category', 'notes')  # This was missing!
+    resource_type = request.form.get('category', 'notes')
     subject = request.form.get('formSubject', 'General')
     description = request.form.get('description', '')
     year = request.form.get('year', datetime.now().year)
@@ -893,7 +917,7 @@ def admin_upload():
                 else:
                     file_size_str = f"{file_size} Bytes"
                 
-                # Create Resource record - FIXED: All fields properly set
+                # Create Resource record
                 resource = Resource(
                     title=title,
                     description=description,
@@ -901,7 +925,7 @@ def admin_upload():
                     file_name=filename,
                     file_type=file.content_type or 'application/octet-stream',
                     file_size=file_size_str,
-                    resource_type=resource_type,  # This is CRITICAL!
+                    resource_type=resource_type,
                     year=int(year) if year else datetime.now().year,
                     semester=semester,
                     branch=branch,
@@ -970,7 +994,7 @@ def delete_resource(resource_id):
             try:
                 service.files().delete(fileId=resource.file_id).execute()
             except:
-                pass  # Continue even if Drive delete fails
+                pass
         
         db.session.delete(resource)
         db.session.commit()
