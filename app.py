@@ -2,7 +2,7 @@ import os
 import io
 import json
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -32,7 +32,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Models (Keep your existing models)
+# Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -58,7 +58,7 @@ class Resource(db.Model):
     file_type = db.Column(db.String(50))
     file_size = db.Column(db.String(20))
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
-    resource_type = db.Column(db.String(50))  # notes, pyq, sample_paper, books
+    resource_type = db.Column(db.String(50))
     year = db.Column(db.Integer)
     semester = db.Column(db.String(10))
     branch = db.Column(db.String(50))
@@ -82,14 +82,13 @@ class Progress(db.Model):
     score = db.Column(db.Float)
     date_completed = db.Column(db.DateTime)
     notes = db.Column(db.Text)
-    time_spent = db.Column(db.Integer, default=0)  # in minutes
+    time_spent = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Google Drive Service
 def get_drive_service():
     try:
         if not app.config.get('SERVICE_ACCOUNT_FILE'):
-            flash('Google Drive service account not configured', 'error')
             return None
             
         creds = service_account.Credentials.from_service_account_file(
@@ -100,13 +99,10 @@ def get_drive_service():
         return service
     except Exception as e:
         app.logger.error(f"Drive service error: {e}")
-        flash(f'Google Drive service error: {str(e)}', 'error')
         return None
 
-# Get or create folder ID for branch
 def get_or_create_folder(service, branch_name):
     try:
-        # First, check if folder already exists
         query = f"name='{branch_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
         results = service.files().list(q=query, fields="files(id, name)").execute()
         folders = results.get('files', [])
@@ -114,7 +110,6 @@ def get_or_create_folder(service, branch_name):
         if folders:
             return folders[0]['id']
         
-        # Create new folder if it doesn't exist
         folder_metadata = {
             'name': branch_name,
             'mimeType': 'application/vnd.google-apps.folder'
@@ -126,21 +121,17 @@ def get_or_create_folder(service, branch_name):
         app.logger.error(f"Folder creation error: {e}")
         return None
 
-# Upload file to Google Drive in specific branch folder
 def upload_to_drive(service, file_path, file_name, branch_name):
     try:
-        # Get or create folder for the branch
         folder_id = get_or_create_folder(service, branch_name)
         if not folder_id:
             return None, "Failed to create/get branch folder"
         
-        # Prepare file metadata
         file_metadata = {
             'name': file_name,
             'parents': [folder_id]
         }
         
-        # Upload file
         media = MediaFileUpload(
             file_path,
             mimetype='application/pdf' if file_name.lower().endswith('.pdf') else 'application/octet-stream',
@@ -172,7 +163,8 @@ def before_request():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Routes
+# ================== ALL ROUTES ==================
+
 @app.route('/')
 def index():
     featured = Resource.query.filter_by(is_approved=True).order_by(desc(Resource.downloads)).limit(6).all()
@@ -187,6 +179,89 @@ def index():
     return render_template('index.html', 
                           featured=featured, 
                           stats=stats)
+
+@app.route('/upload_files', methods=['GET', 'POST'])
+@login_required
+def upload_files():
+    if not current_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        if 'files' not in request.files:
+            flash('No files selected!', 'error')
+            return redirect(url_for('index'))
+        
+        files = request.files.getlist('files')
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', 'general')
+        
+        uploaded_count = 0
+        uploaded_names = []
+        errors = []
+        
+        for file in files:
+            if file.filename == '':
+                continue
+                
+            if not allowed_file(file.filename):
+                errors.append(f'File type not allowed: {file.filename}')
+                continue
+                
+            try:
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                new_filename = f"{timestamp}_{filename}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+                file.save(file_path)
+                uploaded_count += 1
+                uploaded_names.append(filename)
+                
+            except Exception as e:
+                errors.append(f'Error uploading {file.filename}: {str(e)}')
+        
+        if uploaded_count > 0:
+            flash(f'✅ Successfully uploaded {uploaded_count} file(s): {", ".join(uploaded_names[:3])}{"..." if len(uploaded_names) > 3 else ""}', 'success')
+        
+        if errors:
+            for error in errors[:5]:
+                flash(f'❌ {error}', 'error')
+            if len(errors) > 5:
+                flash(f'❌ ... and {len(errors) - 5} more errors', 'error')
+        
+        return redirect(url_for('index'))
+
+@app.route('/view_uploads')
+def view_uploads():
+    files = []
+    if os.path.exists(UPLOAD_FOLDER):
+        files = [f for f in os.listdir(UPLOAD_FOLDER) 
+                if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
+    
+    file_info = []
+    for file in files:
+        file_path = os.path.join(UPLOAD_FOLDER, file)
+        size = os.path.getsize(file_path)
+        timestamp = datetime.fromtimestamp(os.path.getmtime(file_path))
+        
+        if '_' in file:
+            original_name = '_'.join(file.split('_')[1:])
+        else:
+            original_name = file
+            
+        file_info.append({
+            'name': file,
+            'original_name': original_name,
+            'size': size,
+            'upload_time': timestamp.strftime('%Y-%m-%d %H:%M'),
+            'url': f"/get_file/{file}"
+        })
+    
+    return render_template('uploads_list.html', files=file_info)
+
+@app.route('/get_file/<filename>')
+def get_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -680,43 +755,49 @@ def admin_portal():
     if not current_user.is_admin:
         return redirect(url_for('index'))
     
-    # Get statistics - MATCHING YOUR upload.html TEMPLATE
+    # Get statistics
     total_users = User.query.count()
-    total_files = Resource.query.count()
     
-    # Calculate total size (from Google Drive - estimate or skip)
-    total_size_mb = 0  # You can't calculate this easily from Google Drive
+    # Get ALL resources from database
+    all_resources = Resource.query.order_by(desc(Resource.upload_date)).all()
+    total_resources = len(all_resources)
     
-    # Get all users (except current admin)
+    # Calculate total size from database
+    total_size_mb = 0
+    for resource in all_resources:
+        if resource.file_size:
+            try:
+                # Handle different file size formats
+                size_str = str(resource.file_size)
+                if 'MB' in size_str:
+                    size_val = float(size_str.replace('MB', '').strip())
+                    total_size_mb += size_val
+                elif 'KB' in size_str:
+                    size_val = float(size_str.replace('KB', '').strip())
+                    total_size_mb += size_val / 1024
+                elif 'Bytes' in size_str or size_str.isdigit():
+                    if size_str.isdigit():
+                        size_val = float(size_str)
+                    else:
+                        size_val = float(size_str.replace('Bytes', '').strip())
+                    total_size_mb += size_val / (1024 * 1024)
+            except:
+                continue
+    
+    # Get all users except current admin
     users = User.query.filter(User.id != current_user.id).all()
-    
-    # Get all files from database (Resources)
-    all_files = Resource.query.order_by(desc(Resource.upload_date)).limit(50).all()
-    
-    # Prepare file sizes and dates
-    file_sizes = {}
-    file_dates = {}
-    file_downloads = {}
-    
-    for resource in all_files:
-        file_sizes[resource.file_name] = resource.file_size
-        file_dates[resource.file_name] = resource.upload_date.strftime('%Y-%m-%d %H:%M')
-        file_downloads[resource.file_name] = resource.downloads
     
     current_year = datetime.now().year
     
     return render_template('upload.html',
                          stats={
                              'total_users': total_users,
-                             'total_files': total_files,
-                             'total_size_mb': total_size_mb,
+                             'total_files': total_resources,
+                             'total_size_mb': round(total_size_mb, 2),
                              'today_uploads': 0
                          },
                          users=users,
-                         all_files=[r.file_name for r in all_files],
-                         file_sizes=file_sizes,
-                         file_dates=file_dates,
-                         file_downloads=file_downloads,
+                         all_resources=all_resources[:50],  # Pass resources to template
                          current_year=current_year)
 
 @app.route('/admin/upload', methods=['POST'])
@@ -767,17 +848,23 @@ def admin_upload():
                     os.remove(temp_path)
                     continue
                 
-                # Get file size
+                # Get file size and format it
                 file_size = os.path.getsize(temp_path)
+                if file_size > 1024*1024:
+                    file_size_str = f"{file_size/(1024*1024):.2f} MB"
+                elif file_size > 1024:
+                    file_size_str = f"{file_size/1024:.2f} KB"
+                else:
+                    file_size_str = f"{file_size} Bytes"
                 
                 # Create Resource record
                 resource = Resource(
                     title=title,
                     description=description,
-                    file_id=file_id,  # This is the Google Drive file ID
+                    file_id=file_id,
                     file_name=filename,
                     file_type=file.content_type,
-                    file_size=str(file_size),
+                    file_size=file_size_str,
                     resource_type=resource_type,
                     year=int(year) if year else datetime.now().year,
                     semester=semester,
@@ -792,8 +879,6 @@ def admin_upload():
                 
                 db.session.add(resource)
                 uploaded_count += 1
-                
-                # Delete temp file
                 os.remove(temp_path)
                 
             except Exception as e:
@@ -835,7 +920,7 @@ def delete_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)
     
     try:
-        # Optional: Delete from Google Drive too
+        # Delete from Google Drive
         service = get_drive_service()
         if service and resource.file_id:
             try:
@@ -849,6 +934,33 @@ def delete_resource(resource_id):
     except Exception as e:
         flash(f'Error deleting resource: {str(e)}', 'error')
     
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/clear-old-files', methods=['POST'])
+@login_required
+def clear_old_files():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    flash('Feature not implemented yet', 'info')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/export-users')
+@login_required
+def export_users():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    flash('Feature not implemented yet', 'info')
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/backup', methods=['POST'])
+@login_required
+def system_backup():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    flash('Feature not implemented yet', 'info')
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
 # Initialize database

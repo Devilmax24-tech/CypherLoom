@@ -215,6 +215,58 @@
         margin-right: 8px;
         width: 20px;
     }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+        .admin-container {
+            padding: 15px;
+        }
+        
+        .admin-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-box h3 {
+            font-size: 22px;
+        }
+        
+        .upload-area {
+            padding: 30px 15px;
+        }
+        
+        .upload-icon {
+            font-size: 36px;
+        }
+        
+        .metadata-fields {
+            padding: 15px;
+        }
+        
+        .btn-admin {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .user-table {
+            font-size: 14px;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            word-break: break-word;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .admin-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-control, .form-select {
+            font-size: 14px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -257,7 +309,7 @@
 
             <!-- Section 1: File Upload with Metadata -->
             <div class="admin-card">
-                <h3><i class="fas fa-cloud-upload-alt"></i> Upload Materials</h3>
+                <h3><i class="fas fa-cloud-upload-alt"></i> Upload Materials to Google Drive</h3>
                 <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
                     
                     <!-- Hidden fields for database (will be set by JavaScript) -->
@@ -364,8 +416,8 @@
                         
                         <!-- Path Preview -->
                         <div class="path-preview">
-                            <div class="text-muted mb-1">Files will be saved in:</div>
-                            <div id="pathDisplay">/uploads/[branch]/sem[number]/[type]/[subject]/</div>
+                            <div class="text-muted mb-1">Files will be saved in Google Drive:</div>
+                            <div id="pathDisplay">/Google Drive/[branch]/sem[number]/[type]/[subject]/</div>
                         </div>
                     </div>
 
@@ -377,11 +429,14 @@
                         <h4>Drag & Drop Files Here</h4>
                         <p class="text-muted">or click to browse files</p>
                         <p class="text-muted small">Supports: PDF, DOC, PPT, JPG, PNG, ZIP (Max: 50MB each)</p>
+                        <p class="text-success small mt-2">
+                            <i class="fas fa-cloud me-1"></i> Files will be uploaded to Google Drive
+                        </p>
                     </div>
 
                     <!-- Hidden File Input -->
                     <input type="file" id="files" name="files" multiple style="display: none;" 
-                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar,.mp4,.mp3"
+                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar"
                            onchange="updateFileList()">
 
                     <!-- File List -->
@@ -403,39 +458,48 @@
                             <i class="fas fa-times"></i> Clear All
                         </button>
                         <button type="submit" id="uploadBtn" class="btn btn-admin" disabled>
-                            <i class="fas fa-upload"></i> Upload Files
+                            <i class="fas fa-cloud-upload-alt"></i> Upload to Google Drive
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Section 2: Recent Uploads -->
+            <!-- Section 2: Recent Uploads (Google Drive Resources) -->
             <div class="admin-card">
-                <h4><i class="fas fa-history"></i> Recent Uploads</h4>
-                {% if all_files %}
+                <h4><i class="fas fa-history"></i> Recent Uploads (Google Drive)</h4>
+                {% if all_resources %}
                     <div class="table-responsive">
                         <table class="table user-table">
                             <thead>
                                 <tr>
                                     <th>File Name</th>
-                                    <th>Size</th>
+                                    <th>Branch</th>
+                                    <th>Subject</th>
                                     <th>Upload Date</th>
+                                    <th>Downloads</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for file in all_files[:10] %}
+                                {% for resource in all_resources[:10] %}
                                 <tr>
                                     <td>
-                                        <i class="fas fa-file-{% if file.endswith('.pdf') %}pdf{% elif file.endswith(('.jpg','.png','.jpeg')) %}image{% elif file.endswith(('.doc','.docx')) %}word{% elif file.endswith(('.ppt','.pptx')) %}powerpoint{% else %}alt{% endif %} me-2"></i>
-                                        {{ file }}
+                                        <i class="fas fa-file-{% if resource.file_name and resource.file_name.endswith('.pdf') %}pdf{% elif resource.file_name and resource.file_name.endswith(('.jpg','.png','.jpeg')) %}image{% elif resource.file_name and resource.file_name.endswith(('.doc','.docx')) %}word{% elif resource.file_name and resource.file_name.endswith(('.ppt','.pptx')) %}powerpoint{% else %}alt{% endif %} me-2"></i>
+                                        <span class="d-block text-truncate" style="max-width: 200px;" title="{{ resource.file_name }}">
+                                            {{ resource.file_name }}
+                                        </span>
                                     </td>
-                                    <td>{{ file_sizes[file] }}</td>
-                                    <td>{{ file_dates[file] }}</td>
                                     <td>
-                                        
-                                        <form action="{{ url_for('delete_file', filename=file) }}" method="POST" 
-                                              style="display: inline;" onsubmit="return confirm('Delete {{ file }}?')">
+                                        <span class="badge bg-info">{{ resource.branch|upper if resource.branch else 'GEN' }}</span>
+                                    </td>
+                                    <td>{{ resource.subject|truncate(20) }}</td>
+                                    <td>{{ resource.upload_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ resource.downloads }}</span>
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('delete_resource', resource_id=resource.id) }}" method="POST" 
+                                              style="display: inline;" onsubmit="return confirm('Delete {{ resource.title }} from Google Drive?')">
                                             <button type="submit" class="btn btn-sm btn-danger-admin">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -446,13 +510,13 @@
                             </tbody>
                         </table>
                     </div>
-                    {% if all_files|length > 10 %}
+                    {% if all_resources|length > 10 %}
                         <div class="text-center mt-3">
-                            <small class="text-muted">Showing 10 of {{ all_files|length }} files</small>
+                            <small class="text-muted">Showing 10 of {{ all_resources|length }} resources</small>
                         </div>
                     {% endif %}
                 {% else %}
-                    <p class="text-muted text-center py-4">No files uploaded yet.</p>
+                    <p class="text-muted text-center py-4">No resources uploaded yet.</p>
                 {% endif %}
             </div>
 
@@ -609,7 +673,7 @@
             .replace(/[^a-z0-9]+/g, '_')
             .replace(/^_+|_+$/g, '');
         
-        const path = `/uploads/${branch}/sem${semester}/${category}/${cleanSubject}/`;
+        const path = `Google Drive/${branch}/sem${semester}/${category}/${cleanSubject}/`;
         document.getElementById('pathDisplay').textContent = path;
     }
     
@@ -683,9 +747,7 @@
             'xls': 'file-excel',
             'xlsx': 'file-excel',
             'zip': 'file-archive',
-            'rar': 'file-archive',
-            'mp4': 'file-video',
-            'mp3': 'file-audio'
+            'rar': 'file-archive'
         };
         return icons[ext] || 'file';
     }
@@ -712,14 +774,14 @@
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.innerHTML = `
-                    <div style="display: flex; align-items: center;">
+                    <div style="display: flex; align-items: center; min-width: 0;">
                         <i class="fas fa-${getFileIcon(file.name)} file-icon"></i>
-                        <div class="file-info">
-                            <div class="file-name">${file.name}</div>
+                        <div class="file-info" style="min-width: 0;">
+                            <div class="file-name text-truncate" title="${file.name}">${file.name}</div>
                             <div class="file-size">${formatFileSize(file.size)}</div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeFile(${index})">
                         <i class="fas fa-times"></i>
                     </button>
                 `;
@@ -844,7 +906,7 @@
         
         // Disable upload button
         uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading to Google Drive...';
         
         try {
             const response = await fetch('{{ url_for("admin_upload") }}', {
@@ -861,7 +923,7 @@
                 uploadStatus.className = 'upload-status alert alert-success';
                 uploadStatus.innerHTML = `
                     <i class="fas fa-check-circle"></i> 
-                    Files uploaded successfully to database!
+                    Files uploaded successfully to Google Drive!
                     <div class="mt-2">
                         <a href="#" onclick="location.reload()" class="btn btn-sm btn-success">
                             <i class="fas fa-sync"></i> Refresh Page
@@ -890,7 +952,7 @@
             // Re-enable button after 3 seconds
             setTimeout(() => {
                 uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Files';
+                uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Google Drive';
                 progressContainer.style.display = 'none';
             }, 3000);
         }
