@@ -332,29 +332,60 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
+# Update your dashboard route in app.py to match your template
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    total_resources = Resource.query.filter_by(is_approved=True).count()
+    # Get user's upload stats
     user_uploads = Resource.query.filter_by(uploader_id=current_user.id).count()
-    completed_progress = Progress.query.filter_by(user_id=current_user.id, completed=True).count()
     
-    recent_uploads = Resource.query.filter_by(uploader_id=current_user.id)\
-        .order_by(desc(Resource.upload_date)).limit(5).all()
+    # Get total resources count
+    total_resources = Resource.query.filter_by(is_approved=True).count()
     
-    recent_progress = Progress.query.filter_by(user_id=current_user.id)\
-        .order_by(desc(Progress.created_at)).limit(5).all()
+    # Get user's completed progress
+    completed_progress = Progress.query.filter_by(
+        user_id=current_user.id, 
+        completed=True
+    ).count()
     
-    recommended = Resource.query.filter_by(branch=current_user.branch, is_approved=True)\
-        .order_by(desc(Resource.rating)).limit(5).all()
+    # Get recent resources (system-wide, not user-specific)
+    recent_resources = Resource.query.filter_by(
+        is_approved=True
+    ).order_by(desc(Resource.upload_date)).limit(5).all()
+    
+    # Get recommended resources based on user's branch
+    recommended_resources = Resource.query.filter(
+        Resource.branch == current_user.branch,
+        Resource.is_approved == True
+    ).order_by(desc(Resource.rating)).limit(5).all()
+    
+    # Get user's recent progress
+    recent_user_progress = Progress.query.filter_by(
+        user_id=current_user.id
+    ).order_by(desc(Progress.created_at)).limit(5).all()
+    
+    # Calculate additional stats for your template
+    total_downloads = db.session.query(db.func.sum(Resource.downloads)).scalar() or 0
+    total_views = db.session.query(db.func.sum(Resource.views)).scalar() or 0
+    
+    # Today's uploads by current user
+    today = datetime.now().date()
+    today_uploads = Resource.query.filter(
+        Resource.uploader_id == current_user.id,
+        func.date(Resource.upload_date) == today
+    ).count()
     
     return render_template('dashboard.html',
                          total_resources=total_resources,
                          user_uploads=user_uploads,
                          completed_progress=completed_progress,
-                         recent_uploads=recent_uploads,
-                         recent_progress=recent_progress,
-                         recommended=recommended)
+                         recent_resources=recent_resources,
+                         recommended_resources=recommended_resources,
+                         recent_user_progress=recent_user_progress,
+                         total_downloads=total_downloads,
+                         total_views=total_views,
+                         today_uploads=today_uploads)
+
 
 @app.context_processor
 def utility_processor():
@@ -383,7 +414,7 @@ def utility_processor():
 @login_required
 def resources():
     search = request.args.get('search', '').strip()
-    resource_type = request.args.get('type', '')
+    resource_type = request.args.get('resource_type', '')  # Changed from 'type'
     branch = request.args.get('branch', '')
     semester = request.args.get('semester', '')
     year_filter = request.args.get('year', '')
@@ -417,23 +448,46 @@ def resources():
     if subject:
         query = query.filter_by(subject=subject)
     
+    # Sorting
     if sort_by == 'downloads':
         query = query.order_by(desc(Resource.downloads))
     elif sort_by == 'views':
         query = query.order_by(desc(Resource.views))
     elif sort_by == 'rating':
         query = query.order_by(desc(Resource.rating))
-    else:
+    else:  # recent
         query = query.order_by(desc(Resource.upload_date))
     
+    # Pagination
     page = request.args.get('page', 1, type=int)
     per_page = 12
     resources_paginated = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    branches = db.session.query(Resource.branch).distinct().filter(Resource.branch.isnot(None)).all()
-    semesters = db.session.query(Resource.semester).distinct().filter(Resource.semester.isnot(None)).all()
-    subjects = db.session.query(Resource.subject).distinct().filter(Resource.subject.isnot(None)).all()
-    years = db.session.query(Resource.year).distinct().filter(Resource.year.isnot(None)).order_by(desc(Resource.year)).all()
+    # Get distinct values for filters
+    branches = db.session.query(Resource.branch).distinct().filter(
+        Resource.branch.isnot(None),
+        Resource.branch != ''
+    ).order_by(Resource.branch).all()
+    
+    semesters = db.session.query(Resource.semester).distinct().filter(
+        Resource.semester.isnot(None),
+        Resource.semester != ''
+    ).order_by(Resource.semester).all()
+    
+    subjects = db.session.query(Resource.subject).distinct().filter(
+        Resource.subject.isnot(None),
+        Resource.subject != ''
+    ).order_by(Resource.subject).all()
+    
+    years = db.session.query(Resource.year).distinct().filter(
+        Resource.year.isnot(None)
+    ).order_by(desc(Resource.year)).all()
+    
+    # Get resource types
+    types = db.session.query(Resource.resource_type).distinct().filter(
+        Resource.resource_type.isnot(None),
+        Resource.resource_type != ''
+    ).order_by(Resource.resource_type).all()
     
     return render_template('resources.html',
                          resources=resources_paginated,
@@ -444,31 +498,11 @@ def resources():
                          sort_by=sort_by,
                          year_filter=year_filter,
                          subject_filter=subject,
-                         branches=[b[0] for b in branches],
-                         semesters=[s[0] for s in semesters],
-                         subjects=[s[0] for s in subjects],
-                         years=[y[0] for y in years])
-
-@app.route('/resource/<int:resource_id>')
-@login_required
-def view_resource(resource_id):
-    resource = Resource.query.get_or_404(resource_id)
-    
-    if not resource.is_approved:
-        abort(404)
-    
-    resource.views += 1
-    db.session.commit()
-    
-    related_resources = Resource.query.filter(
-        Resource.id != resource.id,
-        Resource.is_approved == True,
-        Resource.subject == resource.subject
-    ).limit(4).all()
-    
-    return render_template('view_resource.html',
-                         resource=resource,
-                         related_resources=related_resources)
+                         branches=[b[0] for b in branches if b[0]],
+                         semesters=[s[0] for s in semesters if s[0]],
+                         subjects=[s[0] for s in subjects if s[0]],
+                         types=[t[0] for t in types if t[0]],
+                         years=[y[0] for y in years if y[0]])
 
 @app.route('/download/<int:resource_id>')
 @login_required
@@ -813,6 +847,14 @@ def admin_upload():
     files = request.files.getlist('files')
     uploaded_count = 0
     
+    # Get form data - FIXED: Using correct field names
+    branch = request.form.get('formBranch', 'General')
+    semester = request.form.get('formSemester', '1')
+    resource_type = request.form.get('category', 'notes')  # This was missing!
+    subject = request.form.get('formSubject', 'General')
+    description = request.form.get('description', '')
+    year = request.form.get('year', datetime.now().year)
+    
     for file in files:
         if file.filename == '':
             continue
@@ -824,14 +866,8 @@ def admin_upload():
                 temp_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(temp_path)
                 
-                # Get form data
-                branch = request.form.get('branch', 'General')
-                semester = request.form.get('semester', '1')
-                resource_type = request.form.get('category', 'notes')
-                subject = request.form.get('subject', 'General')
-                description = request.form.get('description', '')
-                year = request.form.get('year', datetime.now().year)
-                title = request.form.get('title', filename)
+                # Create title from subject and filename
+                title = f"{subject} - {filename}"
                 
                 # Get Google Drive service
                 service = get_drive_service()
@@ -840,7 +876,7 @@ def admin_upload():
                     os.remove(temp_path)
                     return redirect(f'/{ADMIN_SECRET_PATH}')
                 
-                # Upload to Google Drive in branch folder
+                # Upload to Google Drive
                 file_id, error = upload_to_drive(service, temp_path, filename, branch)
                 
                 if error:
@@ -848,7 +884,7 @@ def admin_upload():
                     os.remove(temp_path)
                     continue
                 
-                # Get file size and format it
+                # Get file size
                 file_size = os.path.getsize(temp_path)
                 if file_size > 1024*1024:
                     file_size_str = f"{file_size/(1024*1024):.2f} MB"
@@ -857,15 +893,15 @@ def admin_upload():
                 else:
                     file_size_str = f"{file_size} Bytes"
                 
-                # Create Resource record
+                # Create Resource record - FIXED: All fields properly set
                 resource = Resource(
                     title=title,
                     description=description,
                     file_id=file_id,
                     file_name=filename,
-                    file_type=file.content_type,
+                    file_type=file.content_type or 'application/octet-stream',
                     file_size=file_size_str,
-                    resource_type=resource_type,
+                    resource_type=resource_type,  # This is CRITICAL!
                     year=int(year) if year else datetime.now().year,
                     semester=semester,
                     branch=branch,
@@ -879,18 +915,26 @@ def admin_upload():
                 
                 db.session.add(resource)
                 uploaded_count += 1
+                
+                # Clean up temp file
                 os.remove(temp_path)
                 
+                app.logger.info(f"✅ Uploaded {filename} to Google Drive: {file_id}")
+                
             except Exception as e:
-                app.logger.error(f"Upload error for {file.filename}: {e}")
+                app.logger.error(f"❌ Upload error for {file.filename}: {e}")
                 flash(f'Error uploading {file.filename}: {str(e)}', 'error')
                 continue
     
     if uploaded_count > 0:
-        db.session.commit()
-        flash(f'Successfully uploaded {uploaded_count} file(s) to Google Drive!', 'success')
+        try:
+            db.session.commit()
+            flash(f'✅ Successfully uploaded {uploaded_count} file(s) to Google Drive!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'❌ Database error: {str(e)}', 'error')
     else:
-        flash('No files were uploaded', 'error')
+        flash('❌ No files were uploaded', 'error')
     
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
