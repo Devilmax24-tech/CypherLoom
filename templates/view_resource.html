@@ -3,236 +3,447 @@
 {% block title %}{{ resource.title }} - CypherLoom{% endblock %}
 
 {% block content %}
+<style>
+    .resource-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 6px 12px;
+        border-radius: 20px;
+    }
+    
+    .badge-notes {
+        background: linear-gradient(135deg, #4e54c8, #8f94fb);
+        color: white;
+    }
+    
+    .badge-pyq {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        color: white;
+    }
+    
+    .badge-books {
+        background: linear-gradient(135deg, #f46b45, #eea849);
+        color: white;
+    }
+    
+    .badge-sample {
+        background: linear-gradient(135deg, #8e2de2, #4a00e0);
+        color: white;
+    }
+    
+    .stats-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stats-card .number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    
+    .preview-box {
+        border: 2px dashed #dee2e6;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .preview-box:hover {
+        border-color: #4e54c8;
+        background: #f0f2ff;
+    }
+    
+    .preview-box.pdf {
+        border-color: #ff6b6b;
+        background: #fff5f5;
+    }
+    
+    .preview-box.pdf:hover {
+        border-color: #ff4757;
+        background: #ffeaea;
+    }
+    
+    .preview-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .preview-box.pdf .preview-icon {
+        color: #ff6b6b;
+    }
+    
+    .action-btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 140px;
+    }
+    
+    .branch-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .subject-tag {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-card .number {
+            font-size: 2rem;
+        }
+        
+        .action-btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
 <div class="container py-4">
+    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('resources') }}">Resources</a></li>
-            <li class="breadcrumb-item active">{{ resource.title }}</li>
+            <li class="breadcrumb-item"><a href="{{ url_for('resources') }}" class="text-decoration-none">📚 Resources</a></li>
+            <li class="breadcrumb-item active fw-bold">{{ resource.title[:30] }}{% if resource.title|length > 30 %}...{% endif %}</li>
         </ol>
     </nav>
     
     <div class="row">
+        <!-- Main Content -->
         <div class="col-lg-8">
-            <!-- Resource Details -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-4">
+            <!-- Header Section -->
+            <div class="card border-0 shadow-lg mb-4" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <!-- Resource Type Badge and Date -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <span class="badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% elif resource.resource_type == 'books' %}badge-books{% else %}badge-sample{% endif %} me-2">
-                                {{ resource.resource_type|upper }}
+                            <span class="resource-badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% elif resource.resource_type == 'books' %}badge-books{% else %}badge-sample{% endif %}">
+                                <i class="fas fa-file-alt me-1"></i>{{ resource.resource_type|upper }}
                             </span>
                             {% if resource.year %}
-                            <span class="badge bg-light text-dark">
+                            <span class="badge bg-light text-dark border ms-2">
                                 <i class="fas fa-calendar-alt me-1"></i>{{ resource.year }}
                             </span>
                             {% endif %}
                         </div>
                         <div class="text-muted">
-                            <small>
-                                <i class="fas fa-calendar me-1"></i>
-                                {{ resource.upload_date.strftime('%B %d, %Y') }}
+                            <small class="fw-medium">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ resource.upload_date.strftime('%d %b %Y') }}
                             </small>
                         </div>
                     </div>
                     
-                    <h1 class="h3 fw-bold mb-3">{{ resource.title }}</h1>
+                    <!-- Title -->
+                    <h1 class="h2 fw-bold mb-3">{{ resource.title }}</h1>
                     
+                    <!-- Description -->
                     {% if resource.description %}
-                    <div class="mb-4">
-                        <p class="lead">{{ resource.description }}</p>
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <p class="mb-0 fw-medium">{{ resource.description }}</p>
                     </div>
                     {% endif %}
                     
-                    <!-- Resource Info -->
-                    <div class="row g-3 mb-4">
-                        {% if resource.subject %}
-                        <div class="col-md-4">
-                            <div class="info-card">
-                                <i class="fas fa-book text-primary"></i>
-                                <div>
-                                    <small class="text-muted">Subject</small>
-                                    <p class="mb-0 fw-bold">{{ resource.subject }}</p>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Tags -->
+                    <div class="d-flex flex-wrap align-items-center mb-4">
+                        {% if resource.branch %}
+                        <span class="branch-badge me-3 mb-2">
+                            <i class="fas fa-university me-1"></i>{{ resource.branch|upper }}
+                        </span>
                         {% endif %}
                         
-                        {% if resource.branch %}
-                        <div class="col-md-4">
-                            <div class="info-card">
-                                <i class="fas fa-code-branch text-success"></i>
-                                <div>
-                                    <small class="text-muted">Branch</small>
-                                    <p class="mb-0 fw-bold">{{ resource.branch }}</p>
-                                </div>
-                            </div>
-                        </div>
+                        {% if resource.subject %}
+                        <span class="subject-tag me-3 mb-2">
+                            <i class="fas fa-book me-1"></i>{{ resource.subject }}
+                        </span>
                         {% endif %}
                         
                         {% if resource.semester %}
+                        <span class="badge bg-info me-2 mb-2">
+                            <i class="fas fa-layer-group me-1"></i>Sem {{ resource.semester }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <div class="info-card">
-                                <i class="fas fa-layer-group text-warning"></i>
-                                <div>
-                                    <small class="text-muted">Semester</small>
-                                    <p class="mb-0 fw-bold">Sem {{ resource.semester }}</p>
+                            <div class="stats-card">
+                                <div class="number text-primary">{{ resource.downloads }}</div>
+                                <small class="text-muted fw-medium">DOWNLOADS</small>
+                                <div class="mt-2">
+                                    <i class="fas fa-download fa-lg text-primary"></i>
                                 </div>
                             </div>
                         </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Stats -->
-                    <div class="d-flex gap-4 mb-4">
-                        <div class="text-center">
-                            <div class="display-6 fw-bold text-primary">{{ resource.downloads }}</div>
-                            <small class="text-muted">Downloads</small>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <div class="number text-success">{{ resource.views }}</div>
+                                <small class="text-muted fw-medium">VIEWS</small>
+                                <div class="mt-2">
+                                    <i class="fas fa-eye fa-lg text-success"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-center">
-                            <div class="display-6 fw-bold text-success">{{ resource.views }}</div>
-                            <small class="text-muted">Views</small>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <div class="number text-warning">{{ resource.rating|default('N/A') }}</div>
+                                <small class="text-muted fw-medium">RATING</small>
+                                <div class="mt-2">
+                                    <i class="fas fa-star fa-lg text-warning"></i>
+                                </div>
+                            </div>
                         </div>
-                        {% if resource.rating %}
-                        <div class="text-center">
-                            <div class="display-6 fw-bold text-warning">{{ resource.rating }}</div>
-                            <small class="text-muted">Rating</small>
-                        </div>
-                        {% endif %}
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap gap-3 action-buttons-pdf">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
                         <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                           class="btn btn-primary btn-lg px-4">
-                            <i class="fas fa-download me-2"></i>Download Now
+                           class="btn btn-primary action-btn me-2">
+                            <i class="fas fa-download"></i>Download Now
                         </a>
                         
-                        <button class="btn btn-outline-secondary btn-lg px-4" onclick="shareResource()">
-                            <i class="fas fa-share-alt me-2"></i>Share
+                        {% if resource.file_name and resource.file_name.lower().endswith('.pdf') %}
+                        <button class="btn btn-outline-danger action-btn me-2" 
+                                onclick="openPreview('{{ resource.id }}')"
+                                data-bs-toggle="modal" data-bs-target="#pdfPreviewModal">
+                            <i class="fas fa-eye"></i>Preview PDF
                         </button>
+                        {% endif %}
                     </div>
                     
-                    <!-- PDF Viewer Section -->
-                    {% if resource.file_name and resource.file_name.endswith('.pdf') and resource.file_id %}
-                    <div class="mt-4">
-                        <h5 class="fw-bold mb-3">
+                    <!-- PDF Preview Box -->
+                    {% if resource.file_name and resource.file_name.lower().endswith('.pdf') %}
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center">
                             <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
                         </h5>
                         
-                        <!-- Responsive PDF Viewer -->
-                        <div class="ratio ratio-4x3 pdf-viewer-container">
-                            <iframe id="pdfViewer"
-                                    class="pdf-frame"
-                                    src="{{ url_for('preview_resource', resource_id=resource.id) }}#toolbar=0&navpanes=0&scrollbar=0"
-                                    loading="lazy">
-                            </iframe>
-                        </div>
-                        
-                        <!-- PDF Actions -->
-                        <div class="pdf-actions mt-3 d-flex flex-wrap gap-2">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="zoomIn()">
-                                <i class="fas fa-search-plus me-1"></i> Zoom In
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="zoomOut()">
-                                <i class="fas fa-search-minus me-1"></i> Zoom Out
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="fitToWidth()">
-                                <i class="fas fa-arrows-alt-h me-1"></i> Fit Width
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="fullscreen()">
-                                <i class="fas fa-expand me-1"></i> Fullscreen
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="printPDF()">
-                                <i class="fas fa-print me-1"></i> Print
-                            </button>
+                        <div class="preview-box pdf" 
+                             onclick="openPreview('{{ resource.id }}')"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#pdfPreviewModal">
+                            <div class="preview-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <h5 class="fw-bold">{{ resource.file_name }}</h5>
+                            <p class="text-muted mb-3">Click to preview this PDF document</p>
+                            <span class="badge bg-danger">
+                                <i class="fas fa-expand-alt me-1"></i>Click to Preview
+                            </span>
                         </div>
                     </div>
-                    {% elif not resource.file_id %}
-                    <div class="mt-4">
-                        <div class="no-preview text-center p-4 border rounded">
-                            <i class="fas fa-cloud-download-alt fa-3x text-primary mb-3"></i>
-                            <h5>Download Required</h5>
-                            <p class="text-muted mb-3">This file needs to be downloaded to view</p>
+                    {% else %}
+                    <!-- Non-PDF File Preview -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-file text-primary me-2"></i>File Preview
+                        </h5>
+                        <div class="preview-box">
+                            <div class="preview-icon">
+                                {% if resource.file_name and resource.file_name.lower().endswith(('.doc', '.docx')) %}
+                                <i class="fas fa-file-word text-primary"></i>
+                                {% elif resource.file_name and resource.file_name.lower().endswith('.zip') %}
+                                <i class="fas fa-file-archive text-warning"></i>
+                                {% else %}
+                                <i class="fas fa-file text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            <h5 class="fw-bold">{{ resource.file_name }}</h5>
+                            <p class="text-muted mb-3">This file can only be viewed after download</p>
                             <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                               class="btn btn-primary">
+                               class="btn btn-primary action-btn">
                                 <i class="fas fa-download me-2"></i>Download to View
                             </a>
                         </div>
                     </div>
                     {% endif %}
+                    
+                    <!-- File Information -->
+                    <div class="mt-4">
+                        <h5 class="fw-bold mb-3 d-flex align-items-center">
+                            <i class="fas fa-info-circle text-info me-2"></i>File Details
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-signature text-primary me-3 fa-lg"></i>
+                                    <div>
+                                        <small class="text-muted">File Name</small>
+                                        <p class="mb-0 fw-bold">{{ resource.file_name }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-hashtag text-success me-3 fa-lg"></i>
+                                    <div>
+                                        <small class="text-muted">File ID</small>
+                                        <p class="mb-0 fw-bold text-muted">{{ resource.file_id[:10] }}...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Uploader Info -->
+            <div class="card border-0 shadow-lg mb-4" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 d-flex align-items-center">
+                        <i class="fas fa-user-circle text-primary me-2"></i>Uploader Info
+                    </h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                             style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            {{ (resource.uploader.username[0] if resource.uploader else 'S')|upper }}
+                        </div>
+                        <div>
+                            <p class="mb-0 fw-bold fs-5">{{ resource.uploader.username if resource.uploader else 'System' }}</p>
+                            <small class="text-muted">Uploaded {{ resource.upload_date.strftime('%d %b %Y') }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success border mt-3">
+                        <div class="d-flex">
+                            <i class="fas fa-check-circle me-2 mt-1"></i>
+                            <div>
+                                <small class="fw-bold">Verified Resource</small>
+                                <p class="mb-0 text-muted small">This file has been checked and approved.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <!-- Related Resources -->
             {% if related_resources %}
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0 fw-bold">Related Resources</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
+            <div class="card border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 d-flex align-items-center">
+                        <i class="fas fa-link text-success me-2"></i>Related Resources
+                    </h5>
+                    <div class="list-group list-group-flush">
                         {% for related in related_resources %}
-                        <div class="col-md-6 mb-3">
-                            <div class="related-resource">
-                                <h6 class="fw-bold mb-1">{{ related.title }}</h6>
-                                <small class="text-muted">{{ related.resource_type|title }} • {{ related.subject }}</small>
-                                <a href="{{ url_for('preview_resource', resource_id=related.id) }}" 
-                                   class="btn btn-sm btn-outline-primary mt-2"
-                                   target="_blank">
-                                    View
-                                </a>
+                        <a href="{{ url_for('view_resource', resource_id=related.id) }}" 
+                           class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ related.title[:40] }}{% if related.title|length > 40 %}...{% endif %}</h6>
+                                    <small class="text-muted">
+                                        <span class="badge bg-light text-dark me-1">{{ related.resource_type|upper }}</span>
+                                        <span class="me-1">•</span>
+                                        {{ related.subject }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ related.downloads }}</span>
                             </div>
-                        </div>
+                        </a>
                         {% endfor %}
                     </div>
                 </div>
             </div>
             {% endif %}
         </div>
-        
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Uploader Info -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">About This Resource</h6>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="avatar me-3">
-                            <i class="fas fa-user-circle fa-2x text-muted"></i>
-                        </div>
-                        <div>
-                            <p class="mb-0 fw-bold">{{ resource.uploader.username if resource.uploader else 'System' }}</p>
-                            <small class="text-muted">Uploaded by</small>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <p class="text-muted small">
-                            <i class="fas fa-info-circle me-1"></i>
-                            This resource is verified and ready for download.
-                        </p>
-                    </div>
+    </div>
+</div>
+
+<!-- PDF Preview Modal -->
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 15px;">
+            <div class="modal-header bg-dark text-white" style="border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-file-pdf me-2"></i>{{ resource.title }}
+                </h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-light me-2" onclick="printPDF()">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">Quick Actions</h6>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary" onclick="addToBookmarks()">
-                            <i class="fas fa-bookmark me-2"></i>Bookmark
-                        </button>
-                        <button class="btn btn-outline-success" onclick="reportResource()">
-                            <i class="fas fa-flag me-2"></i>Report Issue
-                        </button>
-                        <a href="{{ url_for('resources') }}" class="btn btn-outline-warning">
-                            <i class="fas fa-search me-2"></i>Find Similar
-                        </a>
-                    </div>
+            <div class="modal-body p-0">
+                <div class="ratio ratio-16x9">
+                    <iframe id="pdfFrame" 
+                            src=""
+                            class="w-100 h-100"
+                            style="border: none;"
+                            allowfullscreen>
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <div class="text-center">
+                                <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                <h5>Loading PDF Preview...</h5>
+                                <p>If the PDF doesn't load, <a href="{{ url_for('download_resource', resource_id=resource.id) }}">download it instead</a>.</p>
+                            </div>
+                        </div>
+                    </iframe>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                   class="btn btn-primary px-4">
+                    <i class="fas fa-download me-2"></i>Download PDF
+                </a>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close Preview</button>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Open PDF Preview
+    function openPreview(resourceId) {
+        const pdfFrame = document.getElementById('pdfFrame');
+        pdfFrame.src = `/preview/${resourceId}`;
+    }
+    
+    // Print PDF
+    function printPDF() {
+        const pdfFrame = document.getElementById('pdfFrame');
+        if (pdfFrame.contentWindow) {
+            pdfFrame.contentWindow.print();
+        }
+    }
+    
+    // Simple notification
+    function showMessage(message, type = 'info') {
+        alert(message);
+    }
+</script>
 {% endblock %}

@@ -90,6 +90,7 @@ class Progress(db.Model):
     notes = db.Column(db.Text)
     time_spent = db.Column(db.Integer, default=0)  # in minutes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
 
 class Upload(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -414,8 +415,7 @@ def resources():
     if subject:
         query = query.filter_by(subject=subject)
     
-    # ========== ADD THIS SORTING LOGIC ==========
-    # Apply sorting based on sort_by parameter
+    # Apply sorting
     if sort_by == 'downloads':
         query = query.order_by(desc(Resource.downloads))
     elif sort_by == 'views':
@@ -424,12 +424,11 @@ def resources():
         query = query.order_by(desc(Resource.rating))
     else:  # 'recent' is default
         query = query.order_by(desc(Resource.upload_date))
-    # ============================================
     
     # Get resources with pagination
     page = request.args.get('page', 1, type=int)
     per_page = 12
-    resources_paginated = query.paginate(page=page, per_page=per_page, error_out=False)  # REMOVE .order_by() from here
+    resources_paginated = query.paginate(page=page, per_page=per_page, error_out=False)
     
     # Get unique values for filters
     branches = db.session.query(Resource.branch).distinct().filter(Resource.branch.isnot(None)).all()
@@ -443,45 +442,13 @@ def resources():
                          resource_type=resource_type,
                          branch_filter=branch,
                          semester_filter=semester,
-                         sort_by=sort_by,  # Make sure this is included
+                         sort_by=sort_by,
                          year_filter=year_filter,
                          subject_filter=subject,
                          branches=[b[0] for b in branches],
                          semesters=[s[0] for s in semesters],
                          subjects=[s[0] for s in subjects],
                          years=[y[0] for y in years])
-
-@app.route('/preview/<int:resource_id>')
-@login_required
-def preview_resource(resource_id):
-    resource = Resource.query.get_or_404(resource_id)
-
-    if not resource.is_approved or not resource.file_id:
-        abort(404)
-
-    try:
-        service = get_drive_service()
-        if not service:
-            abort(404)
-
-        request = service.files().get_media(fileId=resource.file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-
-        fh.seek(0)
-        pdf_bytes = fh.read()
-
-        response = make_response(pdf_bytes)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=\"{resource.file_name}\"'
-        return response
-
-    except Exception as e:
-        app.logger.error(f"Preview error: {e}")
-        abort(404)
 
 @app.route('/resource/<int:resource_id>')
 @login_required
@@ -495,12 +462,16 @@ def view_resource(resource_id):
     resource.views += 1
     db.session.commit()
     
-    # Check if user can view/download (for premium features)
-    can_download = True  # For now, all authenticated users can download
+    # Get related resources (same subject, limit 4)
+    related_resources = Resource.query.filter(
+        Resource.id != resource.id,
+        Resource.is_approved == True,
+        Resource.subject == resource.subject
+    ).limit(4).all()
     
     return render_template('view_resource.html',
                          resource=resource,
-                         can_download=can_download)
+                         related_resources=related_resources)
 
 @app.route('/download/<int:resource_id>')
 @login_required
@@ -527,22 +498,25 @@ def download_resource(resource_id):
             resource.downloads += 1
             db.session.commit()
             
-            # Create download record
-            progress = Progress(
-                user_id=current_user.id,
-                resource_id=resource.id,
-                subject=resource.subject,
-                topic=f"Downloaded: {resource.title}",
-                date_completed=datetime.utcnow()
-            )
-            db.session.add(progress)
-            db.session.commit()
+            # Optional: Create download record in Progress table
+            try:
+                progress = Progress(
+                    user_id=current_user.id,
+                    resource_id=resource.id,
+                    subject=resource.subject,
+                    topic=f"Downloaded: {resource.title}",
+                    date_completed=datetime.utcnow()
+                )
+                db.session.add(progress)
+                db.session.commit()
+            except:
+                db.session.rollback()  # Don't break download if progress tracking fails
             
             return send_file(
                 fh,
                 as_attachment=True,
                 download_name=resource.file_name,
-                mimetype=f'application/{resource.file_type}'
+                mimetype='application/octet-stream'
             )
         else:
             flash('File not available for download.', 'warning')
@@ -553,6 +527,44 @@ def download_resource(resource_id):
         flash('Error downloading file. Please try again.', 'danger')
         return redirect(url_for('view_resource', resource_id=resource_id))
 
+@app.route('/preview/<int:resource_id>')
+@login_required
+def preview_resource(resource_id):
+    resource = Resource.query.get_or_404(resource_id)
+
+    if not resource.is_approved or not resource.file_id:
+        abort(404)
+
+    try:
+        service = get_drive_service()
+        if not service:
+            abort(404)
+
+        request = service.files().get_media(fileId=resource.file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+
+        fh.seek(0)
+        pdf_bytes = fh.read()
+
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename="{resource.file_name}"'
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Preview error: {e}")
+        abort(404)
+
+# Optional: If you want to keep the progress tracking but simplified
+@app.route('/api/resource/<int:resource_id>/track-preview', methods=['POST'])
+@login_required
+def track_preview(resource_id):
+    # Just track preview if needed (optional)
+    return '', 200
 
 @app.route('/progress')
 @login_required
