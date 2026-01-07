@@ -532,8 +532,23 @@ def download_resource(resource_id):
 def preview_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)
 
-    if not resource.is_approved or not resource.file_id:
+    if not resource.is_approved:
         abort(404)
+    
+    if not resource.file_id:
+        # Return a simple error message instead of crashing
+        error_html = """
+        <html>
+            <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f8f9fa;">
+                <div class="text-center p-4">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5 class="text-danger">File Not Available</h5>
+                    <p class="text-muted">This resource doesn't have an attached file.</p>
+                </div>
+            </body>
+        </html>
+        """
+        return make_response(error_html, 404)
 
     try:
         service = get_drive_service()
@@ -558,13 +573,6 @@ def preview_resource(resource_id):
     except Exception as e:
         app.logger.error(f"Preview error: {e}")
         abort(404)
-
-# Optional: If you want to keep the progress tracking but simplified
-@app.route('/api/resource/<int:resource_id>/track-preview', methods=['POST'])
-@login_required
-def track_preview(resource_id):
-    # Just track preview if needed (optional)
-    return '', 200
 
 @app.route('/progress')
 @login_required

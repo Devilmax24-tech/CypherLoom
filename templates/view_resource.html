@@ -116,6 +116,10 @@
         font-size: 0.9rem;
     }
     
+    .no-file-alert {
+        border-left: 4px solid #ffc107;
+    }
+    
     @media (max-width: 768px) {
         .stats-card .number {
             font-size: 2rem;
@@ -216,7 +220,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="stats-card">
-                                <div class="number text-warning">{{ resource.rating|default('N/A') }}</div>
+                                <div class="number text-warning">{{ resource.rating if resource.rating else 'N/A' }}</div>
                                 <small class="text-muted fw-medium">RATING</small>
                                 <div class="mt-2">
                                     <i class="fas fa-star fa-lg text-warning"></i>
@@ -225,65 +229,90 @@
                         </div>
                     </div>
                     
+                    <!-- Check if file exists -->
+                    {% set has_file = resource.file_id and resource.file_name %}
+                    
                     <!-- Action Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
+                        {% if has_file %}
                         <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
                            class="btn btn-primary action-btn me-2">
                             <i class="fas fa-download"></i>Download Now
                         </a>
                         
-                        {% if resource.file_name and resource.file_name.lower().endswith('.pdf') %}
+                        {% if resource.file_name.lower().endswith('.pdf') %}
                         <button class="btn btn-outline-danger action-btn me-2" 
                                 onclick="openPreview('{{ resource.id }}')"
                                 data-bs-toggle="modal" data-bs-target="#pdfPreviewModal">
                             <i class="fas fa-eye"></i>Preview PDF
                         </button>
                         {% endif %}
+                        {% else %}
+                        <button class="btn btn-secondary action-btn me-2" disabled>
+                            <i class="fas fa-times-circle"></i>No File Available
+                        </button>
+                        {% endif %}
                     </div>
                     
-                    <!-- PDF Preview Box -->
-                    {% if resource.file_name and resource.file_name.lower().endswith('.pdf') %}
-                    <div class="mb-4">
-                        <h5 class="fw-bold mb-3 d-flex align-items-center">
-                            <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
-                        </h5>
-                        
-                        <div class="preview-box pdf" 
-                             onclick="openPreview('{{ resource.id }}')"
-                             data-bs-toggle="modal" 
-                             data-bs-target="#pdfPreviewModal">
-                            <div class="preview-icon">
-                                <i class="fas fa-file-pdf"></i>
+                    <!-- File Preview Section -->
+                    {% if has_file %}
+                        {% if resource.file_name.lower().endswith('.pdf') %}
+                        <!-- PDF Preview Box -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
+                            </h5>
+                            
+                            <div class="preview-box pdf" 
+                                 onclick="openPreview('{{ resource.id }}')"
+                                 data-bs-toggle="modal" 
+                                 data-bs-target="#pdfPreviewModal">
+                                <div class="preview-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <h5 class="fw-bold">{{ resource.file_name }}</h5>
+                                <p class="text-muted mb-3">Click to preview this PDF document</p>
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-expand-alt me-1"></i>Click to Preview
+                                </span>
                             </div>
-                            <h5 class="fw-bold">{{ resource.file_name }}</h5>
-                            <p class="text-muted mb-3">Click to preview this PDF document</p>
-                            <span class="badge bg-danger">
-                                <i class="fas fa-expand-alt me-1"></i>Click to Preview
-                            </span>
                         </div>
-                    </div>
-                    {% else %}
-                    <!-- Non-PDF File Preview -->
-                    <div class="mb-4">
-                        <h5 class="fw-bold mb-3">
-                            <i class="fas fa-file text-primary me-2"></i>File Preview
-                        </h5>
-                        <div class="preview-box">
-                            <div class="preview-icon">
-                                {% if resource.file_name and resource.file_name.lower().endswith(('.doc', '.docx')) %}
-                                <i class="fas fa-file-word text-primary"></i>
-                                {% elif resource.file_name and resource.file_name.lower().endswith('.zip') %}
-                                <i class="fas fa-file-archive text-warning"></i>
-                                {% else %}
-                                <i class="fas fa-file text-secondary"></i>
-                                {% endif %}
+                        {% else %}
+                        <!-- Non-PDF File Preview -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-file text-primary me-2"></i>File Preview
+                            </h5>
+                            <div class="preview-box">
+                                <div class="preview-icon">
+                                    {% if resource.file_name.lower().endswith(('.doc', '.docx')) %}
+                                    <i class="fas fa-file-word text-primary"></i>
+                                    {% elif resource.file_name.lower().endswith('.zip') %}
+                                    <i class="fas fa-file-archive text-warning"></i>
+                                    {% else %}
+                                    <i class="fas fa-file text-secondary"></i>
+                                    {% endif %}
+                                </div>
+                                <h5 class="fw-bold">{{ resource.file_name }}</h5>
+                                <p class="text-muted mb-3">This file can only be viewed after download</p>
+                                <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                                   class="btn btn-primary action-btn">
+                                    <i class="fas fa-download me-2"></i>Download to View
+                                </a>
                             </div>
-                            <h5 class="fw-bold">{{ resource.file_name }}</h5>
-                            <p class="text-muted mb-3">This file can only be viewed after download</p>
-                            <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                               class="btn btn-primary action-btn">
-                                <i class="fas fa-download me-2"></i>Download to View
-                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <!-- No file available warning -->
+                    <div class="mb-4">
+                        <div class="alert alert-warning no-file-alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                                <div>
+                                    <h5 class="alert-heading mb-1">File Not Available</h5>
+                                    <p class="mb-0">This resource doesn't have an attached file. Please contact the uploader or administrator.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -299,7 +328,7 @@
                                     <i class="fas fa-file-signature text-primary me-3 fa-lg"></i>
                                     <div>
                                         <small class="text-muted">File Name</small>
-                                        <p class="mb-0 fw-bold">{{ resource.file_name }}</p>
+                                        <p class="mb-0 fw-bold">{{ resource.file_name if resource.file_name else 'Not Available' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -308,7 +337,13 @@
                                     <i class="fas fa-hashtag text-success me-3 fa-lg"></i>
                                     <div>
                                         <small class="text-muted">File ID</small>
-                                        <p class="mb-0 fw-bold text-muted">{{ resource.file_id[:10] }}...</p>
+                                        <p class="mb-0 fw-bold text-muted">
+                                            {% if resource.file_id %}
+                                                {{ resource.file_id[:10] }}...
+                                            {% else %}
+                                                Not Available
+                                            {% endif %}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -337,12 +372,20 @@
                         </div>
                     </div>
                     
-                    <div class="alert alert-success border mt-3">
+                    <div class="alert {% if has_file %}alert-success{% else %}alert-warning{% endif %} border mt-3">
                         <div class="d-flex">
-                            <i class="fas fa-check-circle me-2 mt-1"></i>
+                            <i class="fas {% if has_file %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2 mt-1"></i>
                             <div>
-                                <small class="fw-bold">Verified Resource</small>
-                                <p class="mb-0 text-muted small">This file has been checked and approved.</p>
+                                <small class="fw-bold">
+                                    {% if has_file %}Verified Resource{% else %}Resource Status{% endif %}
+                                </small>
+                                <p class="mb-0 text-muted small">
+                                    {% if has_file %}
+                                        This file has been checked and approved.
+                                    {% else %}
+                                        This resource is missing file attachment.
+                                    {% endif %}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -366,7 +409,7 @@
                                     <small class="text-muted">
                                         <span class="badge bg-light text-dark me-1">{{ related.resource_type|upper }}</span>
                                         <span class="me-1">•</span>
-                                        {{ related.subject }}
+                                        {{ related.subject if related.subject else 'General' }}
                                     </small>
                                 </div>
                                 <span class="badge bg-primary rounded-pill">{{ related.downloads }}</span>
@@ -382,6 +425,7 @@
 </div>
 
 <!-- PDF Preview Modal -->
+{% if has_file and resource.file_name.lower().endswith('.pdf') %}
 <div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0" style="border-radius: 15px;">
@@ -407,7 +451,7 @@
                             <div class="text-center">
                                 <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
                                 <h5>Loading PDF Preview...</h5>
-                                <p>If the PDF doesn't load, <a href="{{ url_for('download_resource', resource_id=resource.id) }}">download it instead</a>.</p>
+                                <p>If the PDF doesn't load, <a href="{{ url_for('download_resource', resource_id=resource.id) }}" onclick="event.stopPropagation();">download it instead</a>.</p>
                             </div>
                         </div>
                     </iframe>
@@ -423,6 +467,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -430,20 +475,30 @@
     // Open PDF Preview
     function openPreview(resourceId) {
         const pdfFrame = document.getElementById('pdfFrame');
-        pdfFrame.src = `/preview/${resourceId}`;
+        if (pdfFrame) {
+            pdfFrame.src = `/preview/${resourceId}`;
+        }
     }
     
     // Print PDF
     function printPDF() {
         const pdfFrame = document.getElementById('pdfFrame');
-        if (pdfFrame.contentWindow) {
+        if (pdfFrame && pdfFrame.contentWindow) {
             pdfFrame.contentWindow.print();
         }
     }
     
-    // Simple notification
-    function showMessage(message, type = 'info') {
-        alert(message);
-    }
+    // Handle modal hidden event
+    document.addEventListener('DOMContentLoaded', function() {
+        const pdfModal = document.getElementById('pdfPreviewModal');
+        if (pdfModal) {
+            pdfModal.addEventListener('hidden.bs.modal', function () {
+                const pdfFrame = document.getElementById('pdfFrame');
+                if (pdfFrame) {
+                    pdfFrame.src = ''; // Clear iframe source when modal closes
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}
