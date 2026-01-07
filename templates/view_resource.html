@@ -176,8 +176,9 @@
                             <div class="related-resource">
                                 <h6 class="fw-bold mb-1">{{ related.title }}</h6>
                                 <small class="text-muted">{{ related.resource_type|title }} • {{ related.subject }}</small>
-                                <a href="{{ url_for('view_resource', resource_id=related.id) }}" 
-                                   class="btn btn-sm btn-outline-primary mt-2">
+                                <a href="{{ url_for('preview_resource', resource_id=related.id) }}" 
+                                   class="btn btn-sm btn-outline-primary mt-2"
+                                   target="_blank">
                                     View
                                 </a>
                             </div>
