@@ -294,14 +294,14 @@
                                 </label>
                                 <select class="form-select" id="semesterSelect" required>
                                     <option value="">Select Semester</option>
-                                    <option value="1">Semester 1</option>
-                                    <option value="2">Semester 2</option>
-                                    <option value="3">Semester 3</option>
-                                    <option value="4">Semester 4</option>
-                                    <option value="5">Semester 5</option>
-                                    <option value="6">Semester 6</option>
-                                    <option value="7">Semester 7</option>
-                                    <option value="8">Semester 8</option>
+                                    <option value="1">Sem- 1</option>
+                                    <option value="2">Sem- 2</option>
+                                    <option value="3">Sem- 3</option>
+                                    <option value="4">Sem- 4</option>
+                                    <option value="5">Sem- 5</option>
+                                    <option value="6">Sem- 6</option>
+                                    <option value="7">Sem- 7</option>
+                                    <option value="8">Sem- 8</option>
                                 </select>
                             </div>
                             
@@ -315,8 +315,6 @@
                                     <option value="pyq">Previous Year Papers (PYQ)</option>
                                     <option value="notes">Study Notes</option>
                                     <option value="books">Books</option>
-                                    <option value="projects">Projects</option>
-                                    <option value="lab">Lab Manuals</option>
                                     <option value="syllabus">Syllabus</option>
                                     <option value="general">General</option>
                                 </select>
@@ -435,10 +433,7 @@
                                     <td>{{ file_sizes[file] }}</td>
                                     <td>{{ file_dates[file] }}</td>
                                     <td>
-                                        <a href="{{ url_for('get_file', filename=file) }}" 
-                                           class="btn btn-sm btn-admin me-2" download>
-                                            <i class="fas fa-download"></i>
-                                        </a>
+                                        
                                         <form action="{{ url_for('delete_file', filename=file) }}" method="POST" 
                                               style="display: inline;" onsubmit="return confirm('Delete {{ file }}?')">
                                             <button type="submit" class="btn btn-sm btn-danger-admin">
