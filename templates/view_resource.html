@@ -101,7 +101,7 @@
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div class="d-flex gap-3 action-buttons-pdf">
+                    <div class="d-flex flex-wrap gap-3 action-buttons-pdf">
                         <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
                            class="btn btn-primary btn-lg px-4">
                             <i class="fas fa-download me-2"></i>Download Now
@@ -113,53 +113,43 @@
                     </div>
                     
                     <!-- PDF Viewer Section -->
-                    {% if resource.file_name and resource.file_name.endswith('.pdf') %}
+                    {% if resource.file_name and resource.file_name.endswith('.pdf') and resource.file_id %}
                     <div class="mt-4">
                         <h5 class="fw-bold mb-3">
                             <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
                         </h5>
                         
-                        <!-- PDF Viewer -->
-                        <div class="pdf-viewer-container">
-                            <div id="pdfLoading" class="pdf-loading">
-                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-                                <p>Loading PDF preview...</p>
-                            </div>
-                            
-                            <iframe id="pdfViewer" class="pdf-frame" 
-                                    src="{{ url_for('get_file', filename=resource.file_name) }}#toolbar=0&navpanes=0&scrollbar=0"
-                                    style="display: none;">
+                        <!-- Responsive PDF Viewer -->
+                        <div class="ratio ratio-4x3 pdf-viewer-container">
+                            <iframe id="pdfViewer"
+                                    class="pdf-frame"
+                                    src="{{ url_for('preview_resource', resource_id=resource.id) }}#toolbar=0&navpanes=0&scrollbar=0"
+                                    loading="lazy">
                             </iframe>
-                            
-                            <div id="noPreview" class="no-preview" style="display: none;">
-                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                                <h5>PDF Preview Not Available</h5>
-                                <p class="text-muted">Please download the file to view it</p>
-                            </div>
                         </div>
                         
                         <!-- PDF Actions -->
-                        <div class="pdf-actions">
-                            <button class="btn-pdf-action" onclick="zoomIn()">
+                        <div class="pdf-actions mt-3 d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="zoomIn()">
                                 <i class="fas fa-search-plus me-1"></i> Zoom In
                             </button>
-                            <button class="btn-pdf-action" onclick="zoomOut()">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="zoomOut()">
                                 <i class="fas fa-search-minus me-1"></i> Zoom Out
                             </button>
-                            <button class="btn-pdf-action" onclick="fitToWidth()">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="fitToWidth()">
                                 <i class="fas fa-arrows-alt-h me-1"></i> Fit Width
                             </button>
-                            <button class="btn-pdf-action" onclick="fullscreen()">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="fullscreen()">
                                 <i class="fas fa-expand me-1"></i> Fullscreen
                             </button>
-                            <button class="btn-pdf-action" onclick="printPDF()">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="printPDF()">
                                 <i class="fas fa-print me-1"></i> Print
                             </button>
                         </div>
                     </div>
                     {% elif not resource.file_id %}
                     <div class="mt-4">
-                        <div class="no-preview">
+                        <div class="no-preview text-center p-4 border rounded">
                             <i class="fas fa-cloud-download-alt fa-3x text-primary mb-3"></i>
                             <h5>Download Required</h5>
                             <p class="text-muted mb-3">This file needs to be downloaded to view</p>

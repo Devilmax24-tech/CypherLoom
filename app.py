@@ -2,7 +2,7 @@ import os
 import io
 import json
 from datetime import datetime,timezone
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -450,6 +450,38 @@ def resources():
                          semesters=[s[0] for s in semesters],
                          subjects=[s[0] for s in subjects],
                          years=[y[0] for y in years])
+
+@app.route('/preview/<int:resource_id>')
+@login_required
+def preview_resource(resource_id):
+    resource = Resource.query.get_or_404(resource_id)
+
+    if not resource.is_approved or not resource.file_id:
+        abort(404)
+
+    try:
+        service = get_drive_service()
+        if not service:
+            abort(404)
+
+        request = service.files().get_media(fileId=resource.file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+
+        fh.seek(0)
+        pdf_bytes = fh.read()
+
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=\"{resource.file_name}\"'
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Preview error: {e}")
+        abort(404)
 
 @app.route('/resource/<int:resource_id>')
 @login_required
