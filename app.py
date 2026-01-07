@@ -680,24 +680,43 @@ def admin_portal():
     if not current_user.is_admin:
         return redirect(url_for('index'))
     
+    # Get statistics - MATCHING YOUR upload.html TEMPLATE
     total_users = User.query.count()
-    total_resources = Resource.query.count()
-    total_downloads = db.session.query(db.func.sum(Resource.downloads)).scalar() or 0
+    total_files = Resource.query.count()
     
+    # Calculate total size (from Google Drive - estimate or skip)
+    total_size_mb = 0  # You can't calculate this easily from Google Drive
+    
+    # Get all users (except current admin)
     users = User.query.filter(User.id != current_user.id).all()
+    
+    # Get all files from database (Resources)
     all_files = Resource.query.order_by(desc(Resource.upload_date)).limit(50).all()
+    
+    # Prepare file sizes and dates
+    file_sizes = {}
+    file_dates = {}
+    file_downloads = {}
+    
+    for resource in all_files:
+        file_sizes[resource.file_name] = resource.file_size
+        file_dates[resource.file_name] = resource.upload_date.strftime('%Y-%m-%d %H:%M')
+        file_downloads[resource.file_name] = resource.downloads
     
     current_year = datetime.now().year
     
     return render_template('upload.html',
                          stats={
                              'total_users': total_users,
-                             'total_resources': total_resources,
-                             'total_downloads': total_downloads,
+                             'total_files': total_files,
+                             'total_size_mb': total_size_mb,
                              'today_uploads': 0
                          },
                          users=users,
-                         all_files=all_files,
+                         all_files=[r.file_name for r in all_files],
+                         file_sizes=file_sizes,
+                         file_dates=file_dates,
+                         file_downloads=file_downloads,
                          current_year=current_year)
 
 @app.route('/admin/upload', methods=['POST'])
