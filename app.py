@@ -2,6 +2,7 @@ import os
 import io
 import json
 from datetime import datetime, timezone
+from flask_migrate import Migrate
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -29,6 +30,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
+migrate = Migrate(app, db)
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
@@ -69,6 +71,7 @@ class Resource(db.Model):
     tags = db.Column(db.String(500))
     is_approved = db.Column(db.Boolean, default=True)
     rating = db.Column(db.Float, default=0.0)
+    drive_url = db.Column(db.String(500))  # ADDED: Store Google Drive shareable URL
     
     uploader = db.relationship('User', backref='uploaded_resources')
 
@@ -125,7 +128,7 @@ def upload_to_drive(service, file_path, file_name, branch_name):
     try:
         folder_id = get_or_create_folder(service, branch_name)
         if not folder_id:
-            return None, "Failed to create/get branch folder"
+            return None, None, "Failed to create/get branch folder"
         
         file_metadata = {
             'name': file_name,
@@ -138,17 +141,41 @@ def upload_to_drive(service, file_path, file_name, branch_name):
             resumable=True
         )
         
+        # MODIFIED: Get both file_id and webViewLink
         file = service.files().create(
             body=file_metadata,
             media_body=media,
             fields='id, name, webViewLink'
         ).execute()
         
-        return file.get('id'), None
+        # Create public shareable link
+        file_id = file.get('id')
+        web_view_link = file.get('webViewLink')
+        
+        # Make the file publicly accessible
+        try:
+            permission = {
+                'type': 'anyone',
+                'role': 'reader'
+            }
+            service.permissions().create(
+                fileId=file_id,
+                body=permission,
+                fields='id'
+            ).execute()
+            
+            # Create direct download link
+            drive_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            
+        except Exception as e:
+            app.logger.warning(f"Could not set public permissions: {e}")
+            drive_url = web_view_link if web_view_link else f"https://drive.google.com/file/d/{file_id}/view"
+        
+        return file_id, drive_url, None
         
     except Exception as e:
         app.logger.error(f"Upload to Drive error: {e}")
-        return None, str(e)
+        return None, None, str(e)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -502,11 +529,10 @@ def resources():
                          types=[t[0] for t in types if t[0]],
                          years=[y[0] for y in years if y[0]])
 
-# ============== MISSING ROUTE - ADD THIS ==============
 @app.route('/resource/<int:resource_id>')
 @login_required
 def view_resource(resource_id):
-    """View a single resource - THIS WAS MISSING!"""
+    """View a single resource details page"""
     resource = Resource.query.get_or_404(resource_id)
     
     if not resource.is_approved:
@@ -526,7 +552,6 @@ def view_resource(resource_id):
     return render_template('view_resource.html',
                          resource=resource,
                          related_resources=related_resources)
-# ============== END OF MISSING ROUTE ==============
 
 @app.route('/download/<int:resource_id>')
 @login_required
@@ -537,6 +562,30 @@ def download_resource(resource_id):
         abort(404)
     
     try:
+        # NEW: If drive_url exists, redirect directly to Google Drive download
+        if resource.drive_url:
+            # Increment download count
+            resource.downloads += 1
+            db.session.commit()
+            
+            # Track progress
+            try:
+                progress = Progress(
+                    user_id=current_user.id,
+                    resource_id=resource.id,
+                    subject=resource.subject,
+                    topic=f"Downloaded: {resource.title}",
+                    date_completed=datetime.utcnow()
+                )
+                db.session.add(progress)
+                db.session.commit()
+            except:
+                db.session.rollback()
+            
+            # Redirect to Google Drive download URL
+            return redirect(resource.drive_url)
+        
+        # Fallback to original download method
         service = get_drive_service()
         if service and resource.file_id:
             request = service.files().get_media(fileId=resource.file_id)
@@ -579,15 +628,48 @@ def download_resource(resource_id):
         flash('Error downloading file. Please try again.', 'danger')
         return redirect(url_for('view_resource', resource_id=resource_id))
 
+# NEW ROUTE: Direct view from Google Drive (opens in new tab)
+@app.route('/view/<int:resource_id>')
+@login_required
+def view_resource_direct(resource_id):
+    """Direct view of resource from Google Drive"""
+    resource = Resource.query.get_or_404(resource_id)
+    
+    if not resource.is_approved:
+        abort(404)
+    
+    # Increment view count
+    resource.views += 1
+    db.session.commit()
+    
+    # Check if drive_url exists
+    if resource.drive_url:
+        # Convert download URL to view URL if needed
+        if 'export=download' in resource.drive_url:
+            file_id = resource.drive_url.split('id=')[-1]
+            view_url = f"https://drive.google.com/file/d/{file_id}/view"
+        else:
+            view_url = resource.drive_url
+        
+        return redirect(view_url)
+    elif resource.file_id:
+        # Create view URL from file_id
+        view_url = f"https://drive.google.com/file/d/{resource.file_id}/view"
+        return redirect(view_url)
+    else:
+        flash('File not available for viewing.', 'warning')
+        return redirect(url_for('view_resource', resource_id=resource_id))
+
 @app.route('/preview/<int:resource_id>')
 @login_required
 def preview_resource(resource_id):
+    """Embedded preview of resource"""
     resource = Resource.query.get_or_404(resource_id)
 
     if not resource.is_approved:
         abort(404)
     
-    if not resource.file_id:
+    if not resource.file_id and not resource.drive_url:
         error_html = """
         <html>
             <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f8f9fa;">
@@ -600,7 +682,69 @@ def preview_resource(resource_id):
         </html>
         """
         return make_response(error_html, 404)
-
+    
+    # NEW: If drive_url exists, embed it
+    if resource.drive_url:
+        # Create embed URL from drive_url
+        if 'export=download' in resource.drive_url:
+            file_id = resource.drive_url.split('id=')[-1]
+            embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
+        else:
+            # Try to extract file_id from URL
+            import re
+            match = re.search(r'/d/([^/]+)/', resource.drive_url)
+            if match:
+                file_id = match.group(1)
+                embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
+            else:
+                embed_url = resource.drive_url
+        
+        # Create HTML page with embedded viewer
+        embed_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>{resource.title} - Preview</title>
+            <style>
+                body, html {{
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                    overflow: hidden;
+                }}
+                .container {{
+                    height: 100vh;
+                    width: 100%;
+                }}
+                iframe {{
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }}
+                .header {{
+                    background: #f8f9fa;
+                    padding: 10px;
+                    text-align: center;
+                    border-bottom: 1px solid #ddd;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <strong>{resource.title}</strong> | 
+                <a href="/download/{resource.id}" target="_blank">Download</a> | 
+                <a href="/view/{resource.id}" target="_blank">Open in New Tab</a> |
+                <a href="/resource/{resource.id}">Back to Details</a>
+            </div>
+            <div class="container">
+                <iframe src="{embed_url}" allow="autoplay"></iframe>
+            </div>
+        </body>
+        </html>
+        """
+        return make_response(embed_html, 200)
+    
+    # Fallback to original preview method
     try:
         service = get_drive_service()
         if not service:
@@ -900,8 +1044,8 @@ def admin_upload():
                     os.remove(temp_path)
                     return redirect(f'/{ADMIN_SECRET_PATH}')
                 
-                # Upload to Google Drive
-                file_id, error = upload_to_drive(service, temp_path, filename, branch)
+                # UPDATED: Upload to Google Drive and get both file_id and drive_url
+                file_id, drive_url, error = upload_to_drive(service, temp_path, filename, branch)
                 
                 if error:
                     flash(f'Failed to upload {filename} to Google Drive: {error}', 'error')
@@ -917,11 +1061,12 @@ def admin_upload():
                 else:
                     file_size_str = f"{file_size} Bytes"
                 
-                # Create Resource record
+                # Create Resource record with drive_url
                 resource = Resource(
                     title=title,
                     description=description,
                     file_id=file_id,
+                    drive_url=drive_url,  # Store the shareable URL
                     file_name=filename,
                     file_type=file.content_type or 'application/octet-stream',
                     file_size=file_size_str,
@@ -943,7 +1088,7 @@ def admin_upload():
                 # Clean up temp file
                 os.remove(temp_path)
                 
-                app.logger.info(f"✅ Uploaded {filename} to Google Drive: {file_id}")
+                app.logger.info(f"✅ Uploaded {filename} to Google Drive: {file_id} | URL: {drive_url}")
                 
             except Exception as e:
                 app.logger.error(f"❌ Upload error for {file.filename}: {e}")
@@ -959,6 +1104,79 @@ def admin_upload():
             flash(f'❌ Database error: {str(e)}', 'error')
     else:
         flash('❌ No files were uploaded', 'error')
+    
+    return redirect(f'/{ADMIN_SECRET_PATH}')
+
+# NEW ROUTE: Update existing resources with drive_url
+@app.route('/admin/update-drive-urls', methods=['POST'])
+@login_required
+def update_drive_urls():
+    """Update existing resources with Google Drive URLs"""
+    if not current_user.is_admin:
+        abort(403)
+    
+    try:
+        service = get_drive_service()
+        if not service:
+            flash('Google Drive service unavailable', 'error')
+            return redirect(f'/{ADMIN_SECRET_PATH}')
+        
+        updated_count = 0
+        
+        # Get all resources without drive_url but with file_id
+        resources = Resource.query.filter(
+            Resource.file_id.isnot(None),
+            Resource.drive_url.is_(None)
+        ).all()
+        
+        for resource in resources:
+            try:
+                # Get file info from Google Drive
+                file_info = service.files().get(
+                    fileId=resource.file_id,
+                    fields='webViewLink'
+                ).execute()
+                
+                web_view_link = file_info.get('webViewLink')
+                
+                if web_view_link:
+                    # Make file public
+                    try:
+                        permission = {
+                            'type': 'anyone',
+                            'role': 'reader'
+                        }
+                        service.permissions().create(
+                            fileId=resource.file_id,
+                            body=permission,
+                            fields='id'
+                        ).execute()
+                        
+                        # Create direct download link
+                        drive_url = f"https://drive.google.com/uc?export=download&id={resource.file_id}"
+                        resource.drive_url = drive_url
+                        updated_count += 1
+                        
+                        app.logger.info(f"Updated resource {resource.id} with drive_url: {drive_url}")
+                        
+                    except Exception as e:
+                        app.logger.warning(f"Could not set permissions for {resource.file_id}: {e}")
+                        resource.drive_url = web_view_link
+                        updated_count += 1
+                
+            except Exception as e:
+                app.logger.error(f"Error updating resource {resource.id}: {e}")
+                continue
+        
+        if updated_count > 0:
+            db.session.commit()
+            flash(f'✅ Updated {updated_count} resource(s) with Google Drive URLs', 'success')
+        else:
+            flash('⚠️ No resources needed updating', 'info')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Error updating drive URLs: {str(e)}', 'error')
     
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
@@ -1034,6 +1252,19 @@ def system_backup():
 # Initialize database
 with app.app_context():
     db.create_all()
+    
+    # Update existing tables with new column
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('resource')]
+        
+        if 'drive_url' not in columns:
+            with db.engine.begin() as conn:
+                conn.execute('ALTER TABLE resource ADD COLUMN drive_url VARCHAR(500)')
+            print("✅ Added 'drive_url' column to resource table")
+    except Exception as e:
+        print(f"Note: Could not check/update table structure: {e}")
     
     if not User.query.filter_by(username='admin').first():
         admin = User(
