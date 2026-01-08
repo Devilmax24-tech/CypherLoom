@@ -1044,6 +1044,8 @@ def admin_upload():
                 
                 # UPDATED: Upload to Google Drive and get both file_id and drive_url
                 file_id, drive_url, error = upload_to_drive(service, temp_path, filename, branch)
+
+                print(f"DEBUG: file_id={file_id}, drive_url={drive_url}, error={error}")
                 
                 if error:
                     flash(f'Failed to upload {filename} to Google Drive: {error}', 'error')
@@ -1082,6 +1084,8 @@ def admin_upload():
                 
                 db.session.add(resource)
                 uploaded_count += 1
+
+                print(f"DEBUG: Created resource ID would be assigned, Title: {title}")
                 
                 # Clean up temp file
                 os.remove(temp_path)
