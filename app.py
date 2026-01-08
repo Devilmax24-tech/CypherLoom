@@ -2,7 +2,6 @@ import os
 import io
 import json
 from datetime import datetime, timezone
-from flask_migrate import Migrate
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -30,7 +29,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
-migrate = Migrate(app, db)
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
@@ -1277,5 +1275,19 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
+def ensure_drive_url_column():
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    columns = [col['name'] for col in inspector.get_columns('resource')]
+    if 'drive_url' not in columns:
+        with db.engine.begin() as conn:
+            conn.execute("ALTER TABLE resource ADD COLUMN drive_url VARCHAR(500)")
+        print("Added drive_url column")
+
+with app.app_context():
+    db.create_all()
+    ensure_drive_url_column()
+
+    
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5000)
