@@ -28,9 +28,9 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
-login_manager = LoginManager()
+login_manager = LoginManager() 
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login'  
 
 # Models
 class User(UserMixin, db.Model):
@@ -1247,19 +1247,19 @@ def system_backup():
     flash('Feature not implemented yet', 'info')
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
-# Initialize database
+
 with app.app_context():
     db.create_all()
     
     # Update existing tables with new column
     try:
-        from sqlalchemy import inspect
+        from sqlalchemy import inspect, text
         inspector = inspect(db.engine)
         columns = [col['name'] for col in inspector.get_columns('resource')]
         
         if 'drive_url' not in columns:
             with db.engine.begin() as conn:
-                conn.execute('ALTER TABLE resource ADD COLUMN drive_url VARCHAR(500)')
+                conn.execute(text('ALTER TABLE resource ADD COLUMN drive_url VARCHAR(500)'))
             print("✅ Added 'drive_url' column to resource table")
     except Exception as e:
         print(f"Note: Could not check/update table structure: {e}")
@@ -1275,19 +1275,6 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-def ensure_drive_url_column():
-    from sqlalchemy import inspect
-    inspector = inspect(db.engine)
-    columns = [col['name'] for col in inspector.get_columns('resource')]
-    if 'drive_url' not in columns:
-        with db.engine.begin() as conn:
-            conn.execute("ALTER TABLE resource ADD COLUMN drive_url VARCHAR(500)")
-        print("Added drive_url column")
 
-with app.app_context():
-    db.create_all()
-    ensure_drive_url_column()
-
-    
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5000)
