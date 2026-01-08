@@ -1012,6 +1012,7 @@ def admin_upload():
     
     files = request.files.getlist('files')
     uploaded_count = 0
+    errors = []
     
     # Get form data
     branch = request.form.get('formBranch', 'General')
@@ -1020,6 +1021,12 @@ def admin_upload():
     subject = request.form.get('formSubject', 'General')
     description = request.form.get('description', '')
     year = request.form.get('year', datetime.now().year)
+    
+    # Get Google Drive service ONCE at start
+    service = get_drive_service()
+    if not service:
+        flash('Google Drive service unavailable. Check service account credentials.', 'error')
+        return redirect(f'/{ADMIN_SECRET_PATH}')
     
     for file in files:
         if file.filename == '':
@@ -1035,20 +1042,16 @@ def admin_upload():
                 # Create title from subject and filename
                 title = f"{subject} - {filename}"
                 
-                # Get Google Drive service
-                service = get_drive_service()
-                if not service:
-                    flash('Google Drive service unavailable', 'error')
-                    os.remove(temp_path)
-                    return redirect(f'/{ADMIN_SECRET_PATH}')
+                # DEBUG: Check file saved
+                print(f"DEBUG: Temp file saved: {temp_path}, Size: {os.path.getsize(temp_path)} bytes")
                 
-                # UPDATED: Upload to Google Drive and get both file_id and drive_url
+                # Upload to Google Drive and get both file_id and drive_url
                 file_id, drive_url, error = upload_to_drive(service, temp_path, filename, branch)
 
                 print(f"DEBUG: file_id={file_id}, drive_url={drive_url}, error={error}")
                 
                 if error:
-                    flash(f'Failed to upload {filename} to Google Drive: {error}', 'error')
+                    errors.append(f'Failed to upload {filename} to Google Drive: {error}')
                     os.remove(temp_path)
                     continue
                 
@@ -1066,7 +1069,7 @@ def admin_upload():
                     title=title,
                     description=description,
                     file_id=file_id,
-                    drive_url=drive_url,  # Store the shareable URL
+                    drive_url=drive_url,
                     file_name=filename,
                     file_type=file.content_type or 'application/octet-stream',
                     file_size=file_size_str,
@@ -1085,7 +1088,7 @@ def admin_upload():
                 db.session.add(resource)
                 uploaded_count += 1
 
-                print(f"DEBUG: Created resource ID would be assigned, Title: {title}")
+                print(f"DEBUG: Resource added to session. Title: {title}, Branch: {branch}")
                 
                 # Clean up temp file
                 os.remove(temp_path)
@@ -1094,91 +1097,29 @@ def admin_upload():
                 
             except Exception as e:
                 app.logger.error(f"❌ Upload error for {file.filename}: {e}")
-                flash(f'Error uploading {file.filename}: {str(e)}', 'error')
+                errors.append(f'Error uploading {file.filename}: {str(e)}')
+                # Clean up temp file if it exists
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
                 continue
     
+    # Commit ALL successful uploads at once
     if uploaded_count > 0:
         try:
             db.session.commit()
+            print(f"DEBUG: Database committed. {uploaded_count} files saved.")
             flash(f'✅ Successfully uploaded {uploaded_count} file(s) to Google Drive!', 'success')
         except Exception as e:
             db.session.rollback()
+            print(f"DEBUG: Database commit failed: {e}")
             flash(f'❌ Database error: {str(e)}', 'error')
+            uploaded_count = 0  # Reset since commit failed
     else:
         flash('❌ No files were uploaded', 'error')
     
-    return redirect(f'/{ADMIN_SECRET_PATH}')
-
-# NEW ROUTE: Update existing resources with drive_url
-@app.route('/admin/update-drive-urls', methods=['POST'])
-@login_required
-def update_drive_urls():
-    """Update existing resources with Google Drive URLs"""
-    if not current_user.is_admin:
-        abort(403)
-    
-    try:
-        service = get_drive_service()
-        if not service:
-            flash('Google Drive service unavailable', 'error')
-            return redirect(f'/{ADMIN_SECRET_PATH}')
-        
-        updated_count = 0
-        
-        # Get all resources without drive_url but with file_id
-        resources = Resource.query.filter(
-            Resource.file_id.isnot(None),
-            Resource.drive_url.is_(None)
-        ).all()
-        
-        for resource in resources:
-            try:
-                # Get file info from Google Drive
-                file_info = service.files().get(
-                    fileId=resource.file_id,
-                    fields='webViewLink'
-                ).execute()
-                
-                web_view_link = file_info.get('webViewLink')
-                
-                if web_view_link:
-                    # Make file public
-                    try:
-                        permission = {
-                            'type': 'anyone',
-                            'role': 'reader'
-                        }
-                        service.permissions().create(
-                            fileId=resource.file_id,
-                            body=permission,
-                            fields='id'
-                        ).execute()
-                        
-                        # Create direct download link
-                        drive_url = f"https://drive.google.com/uc?export=download&id={resource.file_id}"
-                        resource.drive_url = drive_url
-                        updated_count += 1
-                        
-                        app.logger.info(f"Updated resource {resource.id} with drive_url: {drive_url}")
-                        
-                    except Exception as e:
-                        app.logger.warning(f"Could not set permissions for {resource.file_id}: {e}")
-                        resource.drive_url = web_view_link
-                        updated_count += 1
-                
-            except Exception as e:
-                app.logger.error(f"Error updating resource {resource.id}: {e}")
-                continue
-        
-        if updated_count > 0:
-            db.session.commit()
-            flash(f'✅ Updated {updated_count} resource(s) with Google Drive URLs', 'success')
-        else:
-            flash('⚠️ No resources needed updating', 'info')
-            
-    except Exception as e:
-        db.session.rollback()
-        flash(f'❌ Error updating drive URLs: {str(e)}', 'error')
+    # Show individual errors
+    for error in errors[:5]:  # Show first 5 errors
+        flash(f'⚠️ {error}', 'warning')
     
     return redirect(f'/{ADMIN_SECRET_PATH}')
 
