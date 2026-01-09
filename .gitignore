@@ -279,3 +279,13 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/python,flask,visualstudiocode
+
+
+# Local testing files
+config_local.py
+local_test.db
+temp_uploads_local/
+test_local.py
+service-account.json  # Don't commit credentials!
+*.db
+__pycache__/

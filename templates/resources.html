@@ -82,7 +82,7 @@
         border-radius: 12px;
         overflow: hidden;
         transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(38, 37, 37, 0.1);
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -105,18 +105,18 @@
         margin-bottom: 10px;
     }
     
-    .badge-notes { background: rgba(52, 152, 219, 0.2); color: #3498db; }
-    .badge-pyq { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-    .badge-sample_paper { background: rgba(155, 89, 182, 0.2); color: #9b59b6; }
-    .badge-books { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
-    .badge-general { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
+    .badge-notes { background: rgba(52, 152, 219, 0.2); color: #0966a3; }
+    .badge-pyq { background: rgba(46, 204, 113, 0.2); color: #0bad4e; }
+    .badge-sample_paper { background: rgba(155, 89, 182, 0.2); color: #9930c2; }
+    .badge-books { background: rgba(241, 196, 15, 0.2); color: #ac8b09; }
+    .badge-general { background: rgba(149, 165, 166, 0.2); color: #323535; }
     
     /* NEW: File icon in cards */
     .file-icon {
         font-size: 36px;
-        color: var(--primary-color);
+        color: rgb(12, 144, 161);
         opacity: 0.8;
-        margin-bottom: 10px;
+        margin-bottom: 1px;
         text-align: center;
     }
     
@@ -124,7 +124,7 @@
     .compact-title {
         font-size: 16px;
         font-weight: 600;
-        line-height: 1.4;
+        line-height: 1;
         margin-bottom: 8px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -135,7 +135,7 @@
     
     .compact-subject {
         font-size: 14px;
-        color: #aaa;
+        color: #960606;
         margin-bottom: 12px;
         display: -webkit-box;
         -webkit-line-clamp: 1;
@@ -153,7 +153,7 @@
     }
     
     .compact-stats span {
-        color: #888;
+        color: #1e1d1d;
         display: flex;
         align-items: center;
         gap: 5px;
@@ -162,7 +162,7 @@
     /* NEW: Button styles */
     .btn-view-compact {
         background: rgba(52, 152, 219, 0.15);
-        color: #3498db;
+        color: #0c79c1;
         border: 1px solid rgba(52, 152, 219, 0.3);
         padding: 6px 12px;
         border-radius: 6px;
@@ -175,15 +175,15 @@
     }
     
     .btn-view-compact:hover {
-        background: #3498db;
-        color: white;
+        background: #2a96df;
+        color: rgb(0, 0, 0);
         border-color: #3498db;
         text-decoration: none;
     }
     
     .btn-download-compact {
         background: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
+        color: #2634d3;
         border: 1px solid rgba(46, 204, 113, 0.3);
         padding: 6px 12px;
         border-radius: 6px;
@@ -196,10 +196,13 @@
     }
     
     .btn-download-compact:hover {
-        background: #2ecc71;
-        color: white;
+        background: #41dd3c;
+        color: rgb(0, 0, 0);
         border-color: #2ecc71;
         text-decoration: none;
+        transition: all 0.3s;
+
+
     }
     
     /* NEW: Small filter button */
@@ -212,7 +215,7 @@
     /* NEW: Dark cross sign clear button */
     .btn-clear-dark {
         background: transparent;
-        color: #2c3e50;
+        color: #22262b;
         border: 2px solid #2c3e50;
         width: 40px;
         height: 40px;

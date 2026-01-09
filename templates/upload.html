@@ -1,82 +1,341 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Portal - CypherLoom{% endblock %}
+{% block title %}CYPHERLOOM | ADMIN PANEL{% endblock %}
 
 {% block extra_css %}
 <style>
-    .admin-container {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 15px;
-        padding: 30px;
-        margin-top: 20px;
-        color: white;
+    /* GAMING THEME WITHOUT TRANSITIONS */
+    body {
+        background: #0a0a0f;
+        color: #ffffff;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 0;
     }
     
-    .admin-card {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+    .admin-main {
+        display: flex;
+        min-height: 100vh;
     }
     
-    .admin-stats {
+    /* SIDEBAR - LEFT PANEL */
+    .admin-sidebar {
+        width: 280px;
+        background: #0f1117;
+        border-right: 1px solid #1a1d29;
+        padding: 25px 20px;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        left: 0;
+        top: 0;
+    }
+    
+    .logo-section {
+        text-align: center;
+        padding-bottom: 25px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #1a1d29;
+    }
+    
+    .logo-text {
+        font-size: 26px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #00d4ff, #9d4edd);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    
+    .logo-subtext {
+        color: #666;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    
+    /* STATS BOXES */
+    .stats-boxes {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: 1fr;
         gap: 15px;
         margin-bottom: 30px;
     }
     
-    .stat-box {
-        background: rgba(0, 0, 0, 0.3);
-        padding: 20px;
+    .stat-item {
+        background: #151820;
+        border: 1px solid #1f2330;
         border-radius: 10px;
+        padding: 20px;
         text-align: center;
     }
     
-    .stat-box h3 {
+    .stat-icon {
         font-size: 28px;
+        color: #00d4ff;
+        margin-bottom: 12px;
+    }
+    
+    .stat-number {
+        font-size: 32px;
+        font-weight: 800;
+        color: #ffffff;
         margin: 10px 0;
+        background: linear-gradient(90deg, #ffffff, #00d4ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .stat-label {
+        color: #888;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* SIDEBAR LINKS */
+    .sidebar-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .sidebar-link {
+        background: #151820;
+        border: 1px solid #1f2330;
+        color: #aaa;
+        padding: 14px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: none;
+    }
+    
+    .sidebar-link:hover {
+        background: #1a1d29;
+        color: #ffffff;
+        border-color: #00d4ff;
+    }
+    
+    .sidebar-link.active {
+        background: linear-gradient(90deg, #1a1d29, #151820);
+        color: #00d4ff;
+        border-color: #00d4ff;
+    }
+    
+    /* DRIVE STATUS */
+    .drive-status-box {
+        background: #151820;
+        border: 1px solid #1f2330;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .status-label {
+        color: #888;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        background: #1a1d29;
+        color: #2ecc71;
+        border: 1px solid #2ecc71;
+    }
+    
+    .status-offline {
+        color: #ff4757;
+        border-color: #ff4757;
+    }
+    
+    /* MAIN CONTENT AREA */
+    .admin-content {
+        flex: 1;
+        margin-left: 280px;
+        padding: 30px;
+        background: #0a0a0f;
+        min-height: 100vh;
+    }
+    
+    /* CONTENT HEADER */
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #1a1d29;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-title i {
         color: #00d4ff;
     }
     
+    /* CARD STYLES */
+    .card {
+        background: #151820;
+        border: 1px solid #1f2330;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #1a1d29;
+    }
+    
+    .card-header i {
+        font-size: 24px;
+        color: #00d4ff;
+        margin-right: 15px;
+    }
+    
+    .card-header h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+    }
+    
+    /* FORM STYLES */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        display: block;
+        color: #aaa;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-label.required::after {
+        content: " *";
+        color: #ff4757;
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        background: #0f1117;
+        border: 1px solid #1a1d29;
+        color: #ffffff;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #00d4ff;
+        background: #0a0a0f;
+    }
+    
+    /* UPLOAD AREA */
     .upload-area {
-        border: 3px dashed #00d4ff;
-        border-radius: 10px;
-        padding: 50px 20px;
+        border: 2px dashed #1a1d29;
+        border-radius: 12px;
+        padding: 40px 30px;
         text-align: center;
-        background-color: rgba(0, 212, 255, 0.1);
+        background: #0f1117;
+        margin: 25px 0;
         cursor: pointer;
-        transition: all 0.3s;
-        margin-bottom: 20px;
     }
     
     .upload-area:hover {
         border-color: #00d4ff;
-        background-color: rgba(0, 212, 255, 0.2);
-    }
-    
-    .upload-area.dragover {
-        border-color: #00d4ff;
-        background-color: rgba(0, 212, 255, 0.3);
+        background: #151820;
     }
     
     .upload-icon {
         font-size: 48px;
         color: #00d4ff;
+        margin-bottom: 20px;
+    }
+    
+    .upload-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 10px;
+    }
+    
+    .upload-subtitle {
+        color: #888;
+        font-size: 14px;
         margin-bottom: 15px;
     }
     
-    .file-list {
-        max-height: 300px;
+    /* FILE TAGS */
+    .file-tags {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .file-tag {
+        background: #1a1d29;
+        color: #aaa;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    /* FILE LIST */
+    .file-list-container {
+        max-height: 250px;
         overflow-y: auto;
-        margin-top: 20px;
+        margin: 20px 0;
+        border: 1px solid #1a1d29;
+        border-radius: 8px;
+        padding: 15px;
+        background: #0f1117;
     }
     
     .file-item {
-        padding: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 15px;
+        border-bottom: 1px solid #1a1d29;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -86,20 +345,24 @@
         border-bottom: none;
     }
     
-    .file-icon {
-        font-size: 24px;
-        margin-right: 10px;
-        color: #aaa;
-    }
-    
     .file-info {
+        display: flex;
+        align-items: center;
         flex-grow: 1;
     }
     
+    .file-icon {
+        font-size: 20px;
+        color: #00d4ff;
+        margin-right: 15px;
+        width: 24px;
+    }
+    
     .file-name {
-        font-weight: 500;
-        margin-bottom: 5px;
-        color: #ddd;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 3px;
+        font-size: 14px;
     }
     
     .file-size {
@@ -107,492 +370,616 @@
         color: #888;
     }
     
-    .upload-progress {
-        height: 8px;
-        margin-top: 10px;
-    }
-    
-    .btn-admin {
-        background: linear-gradient(135deg, #00d4ff, #0099cc);
+    /* BUTTONS */
+    .btn-primary {
+        background: linear-gradient(90deg, #00d4ff, #9d4edd);
         border: none;
-        padding: 12px 30px;
-        font-size: 16px;
-        font-weight: 600;
         color: white;
-        border-radius: 5px;
-        transition: all 0.3s;
+        padding: 16px 35px;
+        font-size: 15px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        letter-spacing: 0.5px;
     }
     
-    .btn-admin:hover {
-        background: linear-gradient(135deg, #0099cc, #00d4ff);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+    .btn-primary:hover {
+        background: linear-gradient(90deg, #00b8e6, #8a3cd0);
     }
     
-    .btn-admin:disabled {
-        opacity: 0.6;
+    .btn-primary:disabled {
+        opacity: 0.5;
         cursor: not-allowed;
     }
     
-    .upload-status {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 8px;
-        display: none;
-    }
-    
-    .user-table {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .user-table th {
-        background: rgba(0, 212, 255, 0.3);
-        border: none;
-        color: white;
-    }
-    
-    .user-table td {
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #ddd;
-    }
-    
-    .btn-danger-admin {
-        background: linear-gradient(135deg, #ff416c, #ff4b2b);
-        border: none;
-        color: white;
-    }
-    
-    .btn-danger-admin:hover {
-        background: linear-gradient(135deg, #ff4b2b, #ff416c);
-    }
-    
-    .danger-zone {
-        border: 2px solid #ff416c;
-        background: rgba(255, 65, 108, 0.1);
-    }
-    
-    .form-control, .form-select {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        background: rgba(0, 0, 0, 0.5);
-        border-color: #00d4ff;
-        color: white;
-        box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
-    }
-    
-    /* New styles for branch/semester/subject fields */
-    .metadata-fields {
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-        padding: 20px;
-        margin-top: 20px;
-    }
-    
-    .path-preview {
-        background: rgba(0, 212, 255, 0.1);
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 15px;
-        border-left: 4px solid #00d4ff;
-        font-family: monospace;
+    .btn-secondary {
+        background: #1a1d29;
+        border: 1px solid #1f2330;
+        color: #aaa;
+        padding: 14px 25px;
         font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    
+    .btn-secondary:hover {
+        background: #1f2330;
+        color: #ffffff;
+    }
+    
+    .btn-danger {
+        background: #ff4757;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    
+    .btn-danger:hover {
+        background: #ff2e43;
+    }
+    
+    /* TABLE STYLES */
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid #1a1d29;
+        border-radius: 8px;
+    }
+    
+    .admin-table {
+        width: 100%;
+        background: #0f1117;
+        border-collapse: collapse;
+    }
+    
+    .admin-table thead {
+        background: #1a1d29;
+    }
+    
+    .admin-table th {
+        padding: 18px 20px;
+        text-align: left;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #1f2330;
+    }
+    
+    .admin-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #1a1d29;
+        color: #ccc;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    
+    .admin-table tbody tr:hover {
+        background: #151820;
+    }
+    
+    /* BADGES */
+    .badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-primary {
+        background: rgba(0, 212, 255, 0.1);
         color: #00d4ff;
-        word-break: break-all;
+        border: 1px solid rgba(0, 212, 255, 0.3);
     }
     
-    .required-field::after {
-        content: " *";
-        color: #ff416c;
+    .badge-success {
+        background: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.3);
     }
     
-    .form-label i {
-        margin-right: 8px;
-        width: 20px;
+    .badge-danger {
+        background: rgba(255, 71, 87, 0.1);
+        color: #ff4757;
+        border: 1px solid rgba(255, 71, 87, 0.3);
     }
-
-    /* Responsive styles */
-    @media (max-width: 768px) {
-        .admin-container {
-            padding: 15px;
+    
+    .badge-warning {
+        background: rgba(255, 159, 67, 0.1);
+        color: #ff9f43;
+        border: 1px solid rgba(255, 159, 67, 0.3);
+    }
+    
+    /* PROGRESS BAR */
+    .progress-container {
+        display: none;
+        margin: 20px 0;
+    }
+    
+    .progress-bar {
+        height: 6px;
+        background: linear-gradient(90deg, #00d4ff, #9d4edd);
+        border-radius: 3px;
+        width: 0%;
+    }
+    
+    /* ALERTS */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        display: none;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .alert-success {
+        background: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+    
+    .alert-danger {
+        background: rgba(255, 71, 87, 0.1);
+        color: #ff4757;
+        border: 1px solid rgba(255, 71, 87, 0.3);
+    }
+    
+    .alert-warning {
+        background: rgba(255, 159, 67, 0.1);
+        color: #ff9f43;
+        border: 1px solid rgba(255, 159, 67, 0.3);
+    }
+    
+    /* DANGER ZONE */
+    .danger-zone {
+        border-color: #ff4757;
+        background: rgba(255, 71, 87, 0.05);
+    }
+    
+    /* ACTION BUTTONS */
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    /* RESPONSIVE */
+    @media (max-width: 1200px) {
+        .admin-sidebar {
+            width: 250px;
         }
-        
-        .admin-stats {
+        .admin-content {
+            margin-left: 250px;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .admin-main {
+            flex-direction: column;
+        }
+        .admin-sidebar {
+            position: static;
+            width: 100%;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid #1a1d29;
+        }
+        .admin-content {
+            margin-left: 0;
+        }
+        .stats-boxes {
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
         }
-        
-        .stat-box h3 {
+    }
+    
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .page-title {
             font-size: 22px;
         }
-        
-        .upload-area {
-            padding: 30px 15px;
+        .card {
+            padding: 20px;
         }
-        
-        .upload-icon {
-            font-size: 36px;
+        .action-buttons {
+            flex-direction: column;
+            gap: 15px;
         }
-        
-        .metadata-fields {
-            padding: 15px;
-        }
-        
-        .btn-admin {
-            padding: 10px 20px;
-            font-size: 14px;
-        }
-        
-        .user-table {
-            font-size: 14px;
-        }
-        
-        .file-name {
-            font-size: 14px;
-            word-break: break-word;
+        .btn-primary, .btn-secondary {
+            width: 100%;
         }
     }
     
     @media (max-width: 576px) {
-        .admin-stats {
+        .admin-content {
+            padding: 20px;
+        }
+        .stats-boxes {
             grid-template-columns: 1fr;
         }
-        
-        .form-control, .form-select {
-            font-size: 14px;
+        .upload-area {
+            padding: 30px 20px;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-12">
-        <div class="admin-container">
-            <!-- Admin Header -->
-            <div class="text-center mb-4">
-                <h1 class="mb-3"><i class="fas fa-shield-alt"></i> CypherLoom Admin Portal</h1>
-                <p class="text-muted">System Control Panel - Authorized Access Only</p>
-                <a href="/logout" class="btn btn-sm btn-outline-light">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+<div class="admin-main">
+    <!-- SIDEBAR -->
+    <div class="admin-sidebar">
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-text">CYPHERLOOM</div>
+            <div class="logo-subtext">ADMIN PANEL</div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-boxes">
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-number">{{ stats.total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-file-upload"></i></div>
+                <div class="stat-number">{{ stats.total_files }}</div>
+                <div class="stat-label">Total Files</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-database"></i></div>
+                <div class="stat-number">{{ "%0.1f"|format(stats.total_size_mb) }} MB</div>
+                <div class="stat-label">Storage Used</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-upload"></i></div>
+                <div class="stat-number">{{ stats.today_uploads }}</div>
+                <div class="stat-label">Today's Uploads</div>
+            </div>
+        </div>
+        
+        <!-- Drive Status -->
+        <div class="drive-status-box">
+            <div class="status-label">Google Drive Status</div>
+            <div class="status-indicator {% if not drive_status %}status-offline{% endif %}">
+                <i class="fab fa-google-drive me-2"></i>
+                {% if drive_status %}CONNECTED{% else %}NOT CONNECTED{% endif %}
+            </div>
+            <div class="mt-3">
+                <a href="{{ url_for('authorize') }}" class="btn-primary" style="padding: 12px; font-size: 14px; width: 100%;">
+                    <i class="fas fa-plug me-2"></i> Connect Drive
                 </a>
             </div>
-
-            <!-- Statistics Dashboard -->
-            <div class="admin-stats">
-                <div class="stat-box">
-                    <i class="fas fa-users fa-2x"></i>
-                    <h3>{{ stats.total_users }}</h3>
-                    <p>Total Users</p>
-                </div>
-                <div class="stat-box">
-                    <i class="fas fa-file-upload fa-2x"></i>
-                    <h3>{{ stats.total_files }}</h3>
-                    <p>Total Files</p>
-                </div>
-                <div class="stat-box">
-                    <i class="fas fa-database fa-2x"></i>
-                    <h3>{{ "%0.1f"|format(stats.total_size_mb) }} MB</h3>
-                    <p>Storage Used</p>
-                </div>
-                <div class="stat-box">
-                    <i class="fas fa-chart-line fa-2x"></i>
-                    <h3>{{ stats.today_uploads }}</h3>
-                    <p>Today's Uploads</p>
-                </div>
+        </div>
+        
+        <!-- Navigation Links -->
+        <div class="sidebar-links">
+            <a href="#upload" class="sidebar-link active">
+                <i class="fas fa-cloud-upload-alt"></i> Upload Files
+            </a>
+            <a href="#recent" class="sidebar-link">
+                <i class="fas fa-history"></i> Recent Uploads
+            </a>
+            <a href="#users" class="sidebar-link">
+                <i class="fas fa-users"></i> User Management
+            </a>
+            <a href="#controls" class="sidebar-link">
+                <i class="fas fa-cog"></i> System Controls
+            </a>
+        </div>
+        
+        <!-- System Actions -->
+        <div class="mt-auto">
+            <a href="/logout" class="btn-secondary" style="width: 100%; text-align: center;">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="admin-content">
+        <!-- Header -->
+        <div class="content-header">
+            <div class="page-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Upload to Google Drive
             </div>
-
-            <!-- Section 1: File Upload with Metadata -->
-            <div class="admin-card">
-                <h3><i class="fas fa-cloud-upload-alt"></i> Upload Materials to Google Drive</h3>
-                <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
+        </div>
+        
+        <!-- UPLOAD CARD -->
+        <div class="card" id="upload">
+            <div class="card-header">
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Resources</h3>
+            </div>
+            
+            <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
+                <!-- Hidden Fields -->
+                <input type="hidden" id="formBranch" name="branch" value="">
+                <input type="hidden" id="formSemester" name="semester" value="">
+                <input type="hidden" id="formSubject" name="subject" value="">
+                
+                <!-- Form Grid -->
+                <div class="form-grid">
+                    <!-- Branch -->
+                    <div class="form-group">
+                        <label class="form-label required">Branch</label>
+                        <select class="form-select" id="branchSelect" required>
+                            <option value="">Select Branch</option>
+                            <option value="CSE">Computer Science (CSE)</option>
+                            <option value="AIML">Artificial Intelligence (AIML)</option>
+                            <option value="ECE">Electronics & Communication (ECE)</option>
+                            <option value="EE">Electrical (EE)</option>
+                            <option value="CIVIL">Civil </option>
+                            <option value="MECH">Mechanical </option>
+                            <option value="BIO">Biotech</option>
+                        </select>
+                    </div>
                     
-                    <!-- Hidden fields for database (will be set by JavaScript) -->
-                    <input type="hidden" id="formBranch" name="branch" value="general">
-                    <input type="hidden" id="formSemester" name="semester" value="1">
-                    <input type="hidden" id="formSubject" name="subject" value="General">
-                    
-                    <!-- Metadata Fields -->
-                    <div class="metadata-fields">
-                        <h5><i class="fas fa-tags"></i> File Information</h5>
-                        
-                        <div class="row mt-3">
-                            <!-- Branch Selection -->
-                            <div class="col-md-4 mb-3">
-                                <label for="branchSelect" class="form-label required-field">
-                                    <i class="fas fa-code-branch"></i> Branch
-                                </label>
-                                <select class="form-select" id="branchSelect" required>
-                                    <option value="">Select Branch</option>
-                                    <option value="cse">Computer Science (CSE)</option>
-                                    <option value="aiml">Artificial Intelligence (AIML)</option>
-                                    <option value="ece">Electronics & Communication (ECE)</option>
-                                    <option value="ee">Electrical Engineering (EE)</option>
-                                    <option value="civil">Civil Engineering</option>
-                                    <option value="mech">Mechanical Engineering</option>
-                                    <option value="biotech">Biotechnology</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Semester Selection -->
-                            <div class="col-md-4 mb-3">
-                                <label for="semesterSelect" class="form-label required-field">
-                                    <i class="fas fa-graduation-cap"></i> Semester
-                                </label>
-                                <select class="form-select" id="semesterSelect" required>
-                                    <option value="">Select Semester</option>
-                                    <option value="1">Sem- 1</option>
-                                    <option value="2">Sem- 2</option>
-                                    <option value="3">Sem- 3</option>
-                                    <option value="4">Sem- 4</option>
-                                    <option value="5">Sem- 5</option>
-                                    <option value="6">Sem- 6</option>
-                                    <option value="7">Sem- 7</option>
-                                    <option value="8">Sem- 8</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Category Selection -->
-                            <div class="col-md-4 mb-3">
-                                <label for="category" class="form-label required-field">
-                                    <i class="fas fa-folder"></i> Material Type
-                                </label>
-                                <select class="form-select" id="category" name="category" required>
-                                    <option value="">Select Type</option>
-                                    <option value="pyq">Previous Year Papers (PYQ)</option>
-                                    <option value="notes">Study Notes</option>
-                                    <option value="books">Books</option>
-                                    <option value="syllabus">Syllabus</option>
-                                    <option value="general">General</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <!-- Subject Input -->
-                            <div class="col-md-8 mb-3">
-                                <label for="subjectInput" class="form-label required-field">
-                                    <i class="fas fa-book"></i> Subject Name
-                                </label>
-                                <input type="text" class="form-control" id="subjectInput" 
-                                       placeholder="Enter subject name (e.g., Data Structures, Calculus)" 
-                                       required>
-                                <div class="form-text">
-                                    Type subject name manually. Suggestions will appear.
-                                </div>
-                                <div id="subjectSuggestions" class="mt-2" style="display: none;">
-                                    <!-- Suggestions will be populated by JavaScript -->
-                                </div>
-                            </div>
-                            
-                            <!-- Academic Year -->
-                            <div class="col-md-4 mb-3">
-                                <label for="year" class="form-label">
-                                    <i class="fas fa-calendar"></i> Academic Year
-                                </label>
-                                <select class="form-select" id="year" name="year">
-                                     <option value="2026">2026-2027</option>
-                                     <option value="2025" selected>2025-2026</option>
-                                     <option value="2024">2024-2025</option>
-                                     <option value="2023">2023-2024</option>
-                                     <option value="2022">2022-2023</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Description -->
-                        <div class="mb-3">
-                            <label for="description" class="form-label">
-                                <i class="fas fa-align-left"></i> Description (Optional)
-                            </label>
-                            <textarea class="form-control" id="description" name="description" 
-                                      rows="2" placeholder="Additional details about these files..."></textarea>
-                        </div>
-                        
-                        <!-- Path Preview -->
-                        <div class="path-preview">
-                            <div class="text-muted mb-1">Files will be saved in Google Drive:</div>
-                            <div id="pathDisplay">/Google Drive/[branch]/sem[number]/[type]/[subject]/</div>
-                        </div>
-                    </div>
-
-                    <!-- Upload Area -->
-                    <div class="upload-area mt-4" id="dropArea" onclick="document.getElementById('files').click()">
-                        <div class="upload-icon">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                        </div>
-                        <h4>Drag & Drop Files Here</h4>
-                        <p class="text-muted">or click to browse files</p>
-                        <p class="text-muted small">Supports: PDF, DOC, PPT, JPG, PNG, ZIP (Max: 50MB each)</p>
-                        <p class="text-success small mt-2">
-                            <i class="fas fa-cloud me-1"></i> Files will be uploaded to Google Drive
-                        </p>
-                    </div>
-
-                    <!-- Hidden File Input -->
-                    <input type="file" id="files" name="files" multiple style="display: none;" 
-                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.ppt,.pptx,.xlsx,.xls,.zip,.rar"
-                           onchange="updateFileList()">
-
-                    <!-- File List -->
-                    <div id="fileList" class="file-list"></div>
-
-                    <!-- Progress Bar -->
-                    <div class="upload-progress progress" style="display: none;">
-                        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                             role="progressbar" style="width: 0%">
-                        </div>
-                    </div>
-
-                    <!-- Status Message -->
-                    <div id="uploadStatus" class="upload-status"></div>
-
-                    <!-- Buttons -->
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-outline-light" onclick="clearAll()">
-                            <i class="fas fa-times"></i> Clear All
-                        </button>
-                        <button type="submit" id="uploadBtn" class="btn btn-admin" disabled>
-                            <i class="fas fa-cloud-upload-alt"></i> Upload to Google Drive
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Section 2: Recent Uploads (Google Drive Resources) -->
-            <div class="admin-card">
-                <h4><i class="fas fa-history"></i> Recent Uploads (Google Drive)</h4>
-                {% if all_resources %}
-                    <div class="table-responsive">
-                        <table class="table user-table">
-                            <thead>
-                                <tr>
-                                    <th>File Name</th>
-                                    <th>Branch</th>
-                                    <th>Subject</th>
-                                    <th>Upload Date</th>
-                                    <th>Downloads</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for resource in all_resources[:10] %}
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-file-{% if resource.file_name and resource.file_name.endswith('.pdf') %}pdf{% elif resource.file_name and resource.file_name.endswith(('.jpg','.png','.jpeg')) %}image{% elif resource.file_name and resource.file_name.endswith(('.doc','.docx')) %}word{% elif resource.file_name and resource.file_name.endswith(('.ppt','.pptx')) %}powerpoint{% else %}alt{% endif %} me-2"></i>
-                                        <span class="d-block text-truncate" style="max-width: 200px;" title="{{ resource.file_name }}">
-                                            {{ resource.file_name }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ resource.branch|upper if resource.branch else 'GEN' }}</span>
-                                    </td>
-                                    <td>{{ resource.subject|truncate(20) }}</td>
-                                    <td>{{ resource.upload_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        <span class="badge bg-primary">{{ resource.downloads }}</span>
-                                    </td>
-                                    <td>
-                                        <form action="{{ url_for('delete_resource', resource_id=resource.id) }}" method="POST" 
-                                              style="display: inline;" onsubmit="return confirm('Delete {{ resource.title }} from Google Drive?')">
-                                            <button type="submit" class="btn btn-sm btn-danger-admin">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% if all_resources|length > 10 %}
-                        <div class="text-center mt-3">
-                            <small class="text-muted">Showing 10 of {{ all_resources|length }} resources</small>
-                        </div>
-                    {% endif %}
-                {% else %}
-                    <p class="text-muted text-center py-4">No resources uploaded yet.</p>
-                {% endif %}
-            </div>
-
-            <!-- Section 3: User Management -->
-            <div class="admin-card">
-                <h3><i class="fas fa-user-cog"></i> User Management</h3>
-                <div class="table-responsive">
-                    <table class="table user-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Joined</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    {% if user.is_admin %}
-                                        <span class="badge bg-primary">Admin</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">User</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if not user.is_admin %}
-                                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" 
-                                          style="display: inline;" onsubmit="return confirm('Delete user {{ user.username }}?')">
-                                        <button type="submit" class="btn btn-sm btn-danger-admin">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                    <!-- Semester -->
+                    <div class="form-group">
+                        <label class="form-label required">Semester</label>
+                        <select class="form-select" id="semesterSelect" required>
+                            <option value="">Select Semester</option>
+                            {% for i in range(1, 9) %}
+                            <option value="{{ i }}">Semester {{ i }}</option>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </select>
+                    </div>
+                    
+                    <!-- Type -->
+                    <div class="form-group">
+                        <label class="form-label required">Material Type</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select Type</option>
+                            <option value="PYQ">Previous Year Papers (PYQ)</option>
+                            <option value="NOTES">Study Notes</option>
+                            <option value="BOOKS">Books</option>
+                            <option value="GENERAL">General</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Subject -->
+                    <div class="form-group">
+                        <label class="form-label required">Subject Name</label>
+                        <input type="text" class="form-control" id="subjectInput" 
+                               placeholder="Enter subject name" required>
+                    </div>
+                    
+                    <!-- Year -->
+                    <div class="form-group">
+                        <label class="form-label">Academic Year</label>
+                        <select class="form-select" id="year" name="year">
+                            {% for y in range(2022, 2027) %}
+                            <option value="{{ y }}" {% if y == 2025 %}selected{% endif %}>{{ y }}-{{ y+1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="2" placeholder="Additional details..."></textarea>
+                    </div>
                 </div>
+                
+                <!-- Upload Area -->
+                <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-title">Drop Files Here</div>
+                    <div class="upload-subtitle">Drag & drop or click to browse</div>
+                    <div class="file-tags">
+                        <span class="file-tag">PDF</span>
+                        <span class="file-tag">DOC</span>
+                        <span class="file-tag">IMAGE</span>
+                        <span class="file-tag">PPT</span>
+                        <span class="file-tag">ZIP</span>
+                    </div>
+                    <div style="color: #2ecc71; font-size: 13px; font-weight: 600;">
+                        <i class="fas fa-cloud me-1"></i> Files upload to Google Drive
+                    </div>
+                </div>
+                
+                <!-- Hidden File Input -->
+                <input type="file" id="files" name="files" multiple style="display: none;" 
+                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx,.zip" 
+                       onchange="updateFileList()">
+                
+                <!-- File List -->
+                <div id="fileList" class="file-list-container"></div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <!-- Status Message -->
+                <div id="uploadStatus" class="alert"></div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="button" class="btn-secondary" onclick="clearAll()">
+                        <i class="fas fa-times me-2"></i> Clear All
+                    </button>
+                    <button type="submit" id="uploadBtn" class="btn-primary" disabled>
+                        <i class="fas fa-cloud-upload-alt me-2"></i> Upload to Google Drive
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- RECENT UPLOADS -->
+        <div class="card" id="recent">
+            <div class="card-header">
+                <i class="fas fa-history"></i>
+                <h3>Recent Uploads</h3>
             </div>
-
-            <!-- Section 4: Danger Zone -->
-            <div class="admin-card danger-zone">
-                <h3 class="text-danger"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
-                <div class="row">
-                    <div class="col-md-4 mb-2">
-                        <form action="{{ url_for('clear_old_files') }}" method="POST" 
-                              onsubmit="return confirm('Delete all files older than 30 days?')">
-                            <button type="submit" class="btn btn-danger-admin w-100">
-                                <i class="fas fa-broom"></i> Clear Old Files
-                            </button>
-                        </form>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <form action="{{ url_for('export_users') }}" method="GET">
-                            <button type="submit" class="btn btn-admin w-100">
-                                <i class="fas fa-file-export"></i> Export Users
-                            </button>
-                        </form>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <form action="{{ url_for('system_backup') }}" method="POST">
-                            <button type="submit" class="btn btn-admin w-100">
-                                <i class="fas fa-database"></i> System Backup
-                            </button>
-                        </form>
-                    </div>
-                </div>
+            
+            {% if all_resources %}
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Branch</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Downloads</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resource in all_resources[:10] %}
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class="fas fa-file file-icon"></i>
+                                    <div>
+                                        <div class="file-name">{{ resource.file_name|truncate(20) }}</div>
+                                        <div class="file-size">{{ resource.file_size }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">{{ resource.branch|upper if resource.branch else 'GEN' }}</span>
+                            </td>
+                            <td>{{ resource.subject|truncate(15) }}</td>
+                            <td>{{ resource.upload_date.strftime('%d/%m/%y') }}</td>
+                            <td>
+                                <span class="badge badge-success">{{ resource.downloads }}</span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('delete_resource', resource_id=resource.id) }}" method="POST">
+                                    <button type="submit" class="btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-inbox fa-3x" style="color: #666; margin-bottom: 20px;"></i>
+                <div style="color: #888; font-size: 16px;">No uploads yet</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- USER MANAGEMENT -->
+        <div class="card" id="users">
+            <div class="card-header">
+                <i class="fas fa-users"></i>
+                <h3>User Management</h3>
+            </div>
+            
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <div style="
+                                        width: 36px;
+                                        height: 36px;
+                                        background: linear-gradient(90deg, #00d4ff, #9d4edd);
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        margin-right: 12px;
+                                        color: white;
+                                        font-weight: 700;
+                                        font-size: 14px;
+                                    ">
+                                        {{ user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="file-name">{{ user.username }}</div>
+                                        <div class="file-size">{{ user.full_name or 'No name' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.created_at.strftime('%d/%m/%y') }}</td>
+                            <td>
+                                {% if user.is_admin %}
+                                    <span class="badge badge-warning">Admin</span>
+                                {% else %}
+                                    <span class="badge badge-primary">User</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not user.is_admin %}
+                                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST">
+                                    <button type="submit" class="btn-danger">
+                                        <i class="fas fa-trash me-1"></i> Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- SYSTEM CONTROLS -->
+        <div class="card danger-zone" id="controls">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3 style="color: #ff4757;">System Controls</h3>
+            </div>
+            
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-top: 20px;
+            ">
+                <form action="{{ url_for('clear_old_files') }}" method="POST">
+                    <button type="submit" class="btn-danger" style="width: 100%; padding: 14px;">
+                        <i class="fas fa-broom me-2"></i> Clear Temp Files
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('export_users') }}" method="GET">
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 14px;">
+                        <i class="fas fa-file-export me-2"></i> Export Users
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('system_backup') }}" method="POST">
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 14px; background: linear-gradient(90deg, #2ecc71, #27ae60);">
+                        <i class="fas fa-database me-2"></i> System Backup
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -601,124 +988,40 @@
 
 {% block extra_js %}
 <script>
-    // Common subjects for suggestions
-    const commonSubjects = [
-        "Data Structures", "Algorithms", "Database Management", 
-        "Operating Systems", "Computer Networks", "Software Engineering",
-        "Artificial Intelligence", "Machine Learning", "Calculus",
-        "Linear Algebra", "Physics", "Chemistry", "Digital Electronics",
-        "Microprocessors", "Signals and Systems", "Control Systems",
-        "Thermodynamics", "Fluid Mechanics", "Structural Analysis",
-        "Biochemistry", "Genetics", "Environmental Engineering",
-        "Discrete Mathematics", "Object Oriented Programming",
-        "Computer Organization", "Theory of Computation",
-        "Compiler Design", "Computer Graphics", "Web Technology",
-        "Mobile Application Development", "Cloud Computing",
-        "Cyber Security", "Data Mining", "Big Data Analytics"
-    ];
-    
-    // File list array
+    // File management
     let selectedFiles = [];
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateFileList();
-        updatePathPreview();
         
-        // Add event listeners for metadata fields
-        document.getElementById('branchSelect').addEventListener('change', updateMetadata);
-        document.getElementById('semesterSelect').addEventListener('change', updateMetadata);
-        document.getElementById('category').addEventListener('change', updateMetadata);
-        document.getElementById('subjectInput').addEventListener('input', function() {
-            updateMetadata();
-            showSubjectSuggestions(this.value);
-        });
+        // Event listeners for form fields
+        document.getElementById('branchSelect').addEventListener('change', updateFormData);
+        document.getElementById('semesterSelect').addEventListener('change', updateFormData);
+        document.getElementById('category').addEventListener('change', updateFormData);
+        document.getElementById('subjectInput').addEventListener('input', updateFormData);
         
-        // Add event listener for subject input blur
-        document.getElementById('subjectInput').addEventListener('blur', function() {
-            setTimeout(() => {
-                document.getElementById('subjectSuggestions').style.display = 'none';
-            }, 200);
-        });
+        // Setup drag and drop
+        setupDragAndDrop();
+        
+        // Setup sidebar navigation
+        setupNavigation();
     });
     
-    // Update hidden form fields and path preview
-    function updateMetadata() {
-        const branch = document.getElementById('branchSelect').value;
+    // Update hidden form fields
+    function updateFormData() {
+        const branch = document.getElementById('branchSelect').value.toUpperCase();
         const semester = document.getElementById('semesterSelect').value;
-        const category = document.getElementById('category').value;
         const subject = document.getElementById('subjectInput').value;
         
-        // Update hidden fields
         document.getElementById('formBranch').value = branch;
         document.getElementById('formSemester').value = semester;
         document.getElementById('formSubject').value = subject;
         
-        // Update path preview
-        updatePathPreview();
-        
-        // Enable/disable upload button
         checkUploadReady();
     }
     
-    // Update path preview display
-    function updatePathPreview() {
-        const branch = document.getElementById('branchSelect').value || '[branch]';
-        const semester = document.getElementById('semesterSelect').value || '[number]';
-        const category = document.getElementById('category').value || '[type]';
-        const subject = document.getElementById('subjectInput').value || '[subject]';
-        
-        // Clean subject for folder name
-        const cleanSubject = subject.toLowerCase()
-            .replace(/[^a-z0-9]+/g, '_')
-            .replace(/^_+|_+$/g, '');
-        
-        const path = `Google Drive/${branch}/sem${semester}/${category}/${cleanSubject}/`;
-        document.getElementById('pathDisplay').textContent = path;
-    }
-    
-    // Show subject suggestions
-    function showSubjectSuggestions(input) {
-        const suggestionsDiv = document.getElementById('subjectSuggestions');
-        
-        if (!input || input.length < 2) {
-            suggestionsDiv.style.display = 'none';
-            return;
-        }
-        
-        const inputLower = input.toLowerCase();
-        const filtered = commonSubjects.filter(subject => 
-            subject.toLowerCase().includes(inputLower)
-        ).slice(0, 5);
-        
-        if (filtered.length > 0) {
-            let html = '<div class="list-group">';
-            filtered.forEach(subject => {
-                html += `
-                    <button type="button" class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
-                            onclick="selectSubject('${subject}')">
-                        ${subject}
-                    </button>
-                `;
-            });
-            html += '</div>';
-            suggestionsDiv.innerHTML = html;
-            suggestionsDiv.style.display = 'block';
-        } else {
-            suggestionsDiv.style.display = 'none';
-        }
-    }
-    
-    // Select a suggested subject
-    function selectSubject(subject) {
-        document.getElementById('subjectInput').value = subject;
-        document.getElementById('formSubject').value = subject;
-        document.getElementById('subjectSuggestions').style.display = 'none';
-        updatePathPreview();
-        checkUploadReady();
-    }
-    
-    // Check if ready to upload
+    // Check if upload button should be enabled
     function checkUploadReady() {
         const branch = document.getElementById('branchSelect').value;
         const semester = document.getElementById('semesterSelect').value;
@@ -728,37 +1031,6 @@
         
         const isReady = branch && semester && category && subject && hasFiles;
         document.getElementById('uploadBtn').disabled = !isReady;
-    }
-    
-    // Get file icon based on extension
-    function getFileIcon(filename) {
-        const ext = filename.split('.').pop().toLowerCase();
-        const icons = {
-            'pdf': 'file-pdf',
-            'jpg': 'file-image',
-            'jpeg': 'file-image',
-            'png': 'file-image',
-            'gif': 'file-image',
-            'doc': 'file-word',
-            'docx': 'file-word',
-            'txt': 'file-alt',
-            'ppt': 'file-powerpoint',
-            'pptx': 'file-powerpoint',
-            'xls': 'file-excel',
-            'xlsx': 'file-excel',
-            'zip': 'file-archive',
-            'rar': 'file-archive'
-        };
-        return icons[ext] || 'file';
-    }
-    
-    // Format file size
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
     // Update file list display
@@ -774,31 +1046,40 @@
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.innerHTML = `
-                    <div style="display: flex; align-items: center; min-width: 0;">
-                        <i class="fas fa-${getFileIcon(file.name)} file-icon"></i>
-                        <div class="file-info" style="min-width: 0;">
-                            <div class="file-name text-truncate" title="${file.name}">${file.name}</div>
+                    <div class="file-info">
+                        <i class="fas fa-file file-icon"></i>
+                        <div>
+                            <div class="file-name">${file.name}</div>
                             <div class="file-size">${formatFileSize(file.size)}</div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeFile(${index})">
+                    <button type="button" class="btn-danger" onclick="removeFile(${index})" style="padding: 6px 12px;">
                         <i class="fas fa-times"></i>
                     </button>
                 `;
                 fileListDiv.appendChild(fileItem);
             });
         } else {
-            fileListDiv.innerHTML = '<p class="text-muted text-center py-3">No files selected</p>';
+            fileListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">No files selected</div>';
         }
         
         checkUploadReady();
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
     // Remove file from list
     function removeFile(index) {
         selectedFiles.splice(index, 1);
         
-        // Update the file input
+        // Update file input
         const dataTransfer = new DataTransfer();
         selectedFiles.forEach(file => dataTransfer.items.add(file));
         document.getElementById('files').files = dataTransfer.files;
@@ -806,7 +1087,7 @@
         updateFileList();
     }
     
-    // Clear all fields
+    // Clear all form data
     function clearAll() {
         selectedFiles = [];
         document.getElementById('files').value = '';
@@ -817,96 +1098,119 @@
         document.getElementById('description').value = '';
         document.getElementById('year').value = new Date().getFullYear();
         
-        // Clear hidden fields
-        document.getElementById('formBranch').value = 'general';
-        document.getElementById('formSemester').value = '1';
-        document.getElementById('formSubject').value = 'General';
-        
-        updateFileList();
-        updatePathPreview();
-    }
-    
-    // Drag and drop functionality
-    const dropArea = document.getElementById('dropArea');
-    
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
-    });
-    
-    function highlight() {
-        dropArea.classList.add('dragover');
-    }
-    
-    function unhighlight() {
-        dropArea.classList.remove('dragover');
-    }
-    
-    dropArea.addEventListener('drop', handleDrop, false);
-    
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        // Combine with existing files
-        const existingFiles = Array.from(document.getElementById('files').files);
-        const allFiles = [...existingFiles, ...files];
-        
-        // Update file input
-        const dataTransfer = new DataTransfer();
-        allFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('files').files = dataTransfer.files;
+        document.getElementById('formBranch').value = '';
+        document.getElementById('formSemester').value = '';
+        document.getElementById('formSubject').value = '';
         
         updateFileList();
     }
     
-    // Form submission with AJAX
+    // Setup drag and drop
+    function setupDragAndDrop() {
+        const dropArea = document.getElementById('dropArea');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        
+        // Highlight drop area on drag over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, function() {
+                dropArea.style.borderColor = '#00d4ff';
+                dropArea.style.background = '#151820';
+            }, false);
+        });
+        
+        // Remove highlight
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, function() {
+                dropArea.style.borderColor = '#1a1d29';
+                dropArea.style.background = '#0f1117';
+            }, false);
+        });
+        
+        // Handle dropped files
+        dropArea.addEventListener('drop', function(e) {
+            const files = e.dataTransfer.files;
+            
+            // Update file input
+            const dataTransfer = new DataTransfer();
+            for (let i = 0; i < files.length; i++) {
+                dataTransfer.items.add(files[i]);
+            }
+            
+            const fileInput = document.getElementById('files');
+            fileInput.files = dataTransfer.files;
+            
+            // Trigger change event
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        }, false);
+    }
+    
+    // Setup sidebar navigation
+    function setupNavigation() {
+        const links = document.querySelectorAll('.sidebar-link');
+        const sections = document.querySelectorAll('.card');
+        
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                links.forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Scroll to section
+                const targetId = this.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    }
+    
+    // Form submission
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Validate required fields
+        // Validate form
         const branch = document.getElementById('branchSelect').value;
         const semester = document.getElementById('semesterSelect').value;
         const category = document.getElementById('category').value;
         const subject = document.getElementById('subjectInput').value;
         
         if (!branch || !semester || !category || !subject) {
-            alert('Please fill all required fields: Branch, Semester, Type, and Subject');
+            showAlert('Please fill all required fields', 'danger');
             return;
         }
         
         if (selectedFiles.length === 0) {
-            alert('Please select at least one file to upload');
+            showAlert('Please select files to upload', 'warning');
             return;
         }
         
         const formData = new FormData(this);
         const uploadBtn = document.getElementById('uploadBtn');
         const progressBar = document.getElementById('progressBar');
-        const progressContainer = progressBar.parentElement;
+        const progressContainer = document.getElementById('progressContainer');
         const uploadStatus = document.getElementById('uploadStatus');
         
-        // Show progress bar
+        // Show progress
         progressContainer.style.display = 'block';
         progressBar.style.width = '0%';
-        progressBar.textContent = '0%';
         uploadStatus.style.display = 'none';
         
-        // Disable upload button
+        // Disable button
         uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading to Google Drive...';
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Uploading...';
         
         try {
             const response = await fetch('{{ url_for("admin_upload") }}', {
@@ -914,48 +1218,51 @@
                 body: formData
             });
             
+            // Show progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                if (progress >= 90) clearInterval(progressInterval);
+            }, 200);
+            
             if (response.ok) {
-                // Show success
                 progressBar.style.width = '100%';
-                progressBar.textContent = '100%';
-                progressBar.className = 'progress-bar bg-success progress-bar-striped progress-bar-animated';
+                showAlert('Files uploaded successfully to Google Drive!', 'success');
                 
-                uploadStatus.className = 'upload-status alert alert-success';
-                uploadStatus.innerHTML = `
-                    <i class="fas fa-check-circle"></i> 
-                    Files uploaded successfully to Google Drive!
-                    <div class="mt-2">
-                        <a href="#" onclick="location.reload()" class="btn btn-sm btn-success">
-                            <i class="fas fa-sync"></i> Refresh Page
-                        </a>
-                    </div>
-                `;
-                uploadStatus.style.display = 'block';
-                
-                // Clear form after 2 seconds and refresh
+                // Refresh page after delay
                 setTimeout(() => {
-                    clearAll();
                     location.reload();
-                }, 2000);
+                }, 1500);
             } else {
-                throw new Error('Upload failed. Please try again.');
+                throw new Error('Upload failed');
             }
         } catch (error) {
-            progressBar.className = 'progress-bar bg-danger progress-bar-striped progress-bar-animated';
-            progressBar.style.width = '100%';
-            progressBar.textContent = 'Error';
-            
-            uploadStatus.className = 'upload-status alert alert-danger';
-            uploadStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message}`;
-            uploadStatus.style.display = 'block';
+            showAlert('Upload failed: ' + error.message, 'danger');
         } finally {
-            // Re-enable button after 3 seconds
             setTimeout(() => {
                 uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Google Drive';
+                uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i> Upload to Google Drive';
                 progressContainer.style.display = 'none';
             }, 3000);
         }
     });
+    
+    // Show alert message
+    function showAlert(message, type) {
+        const uploadStatus = document.getElementById('uploadStatus');
+        const typeClass = type === 'success' ? 'alert-success' : 
+                         type === 'warning' ? 'alert-warning' : 'alert-danger';
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle';
+        
+        uploadStatus.className = `alert ${typeClass}`;
+        uploadStatus.innerHTML = `
+            <i class="fas ${icon} me-2"></i>
+            ${message}
+            ${type === 'success' ? '<div style="margin-top: 10px;"><a href="#" onclick="location.reload()" style="color: inherit; text-decoration: underline;">Refresh page</a></div>' : ''}
+        `;
+        uploadStatus.style.display = 'block';
+    }
 </script>
 {% endblock %}
