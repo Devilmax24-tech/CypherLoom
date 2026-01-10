@@ -864,6 +864,32 @@ def delete_resource(resource_id):
     
     return redirect(url_for('admin_portal'))
 
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Prevent deleting yourself
+    if user.id == current_user.id:
+        flash('You cannot delete your own account!', 'error')
+        return redirect(url_for('admin_portal'))
+    
+    try:
+        # Delete associated resources first if needed
+        # Resource.query.filter_by(user_id=user_id).delete()
+        
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'User {user.username} deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_portal'))
+
 @app.route('/clear_old_files', methods=['POST'])
 @login_required
 def clear_old_files():
