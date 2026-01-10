@@ -590,24 +590,36 @@
                 </div>
                 
                 <!-- Action Buttons -->
-                  {% elif resource.drive_url and 'drive.google.com' in resource.drive_url %}
-        {% if '/file/d/' in resource.drive_url %}
-          {% set file_id = resource.drive_url.split('/file/d/')[1].split('/')[0] %}
-        {% elif 'id=' in resource.drive_url %}
-          {% set file_id = resource.drive_url.split('id=')[1].split('&')[0] %}
-        {% endif %}
-        
-
-                <div class="d-flex gap-2">
-                       <a href="https://drive.google.com/file/d/{{ resource.file_id }}/view" 
-                               class="btn-view-compact" target="_blank">
-                               <i class="fas fa-eye me-1"></i> View PDF
-                            </a>                    
-
                     <!-- <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
                        class="btn-view-compact" target="_blank">
                         <i class="fas fa-eye me-1"></i> View
                     </a> -->
+                  
+                      <div class="d-flex gap-2">
+                    {% if resource.file_id %}
+                        <a href="https://drive.google.com/file/d/{{ resource.file_id }}/view" 
+                           class="btn-view-compact" target="_blank">
+                           <i class="fas fa-eye me-1"></i> View PDF
+                        </a>
+                    {% elif resource.drive_url and 'drive.google.com' in resource.drive_url %}
+                        {% if '/file/d/' in resource.drive_url %}
+                            {% set file_id = resource.drive_url.split('/file/d/')[1].split('/')[0] %}
+                        {% elif 'id=' in resource.drive_url %}
+                            {% set file_id = resource.drive_url.split('id=')[1].split('&')[0] %}
+                        {% endif %}
+                        
+                        <a href="https://drive.google.com/file/d/{{ file_id }}/view" 
+                           class="btn-view-compact" target="_blank">
+                           <i class="fas fa-eye me-1"></i> View PDF
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
+                           class="btn-view-compact">
+                           <i class="fas fa-download me-1"></i> Download
+                        </a>
+                    {% endif %}
+                </div>
+
                 </div>
             </div>
             {% endfor %}
