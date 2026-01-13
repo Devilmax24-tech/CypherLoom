@@ -116,8 +116,39 @@ class Progress(db.Model):
 
 # ================== GOOGLE DRIVE FUNCTIONS ==================
 
+# def get_drive_service():
+#     """Get Google Drive service using OAuth 2.0"""
+#     creds = None
+    
+#     # Load credentials from token file
+#     if os.path.exists(TOKEN_FILE):
+#         with open(TOKEN_FILE, 'rb') as token:
+#             creds = pickle.load(token)
+    
+#     # If no valid credentials, return None
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             try:
+#                 creds.refresh(Request())
+#                 # Save refreshed credentials
+#                 with open(TOKEN_FILE, 'wb') as token:
+#                     pickle.dump(creds, token)
+#                 print("✅ Google Drive credentials refreshed")
+#             except Exception as e:
+#                 print(f"❌ Failed to refresh credentials: {e}")
+#                 return None
+#         else:
+#             return None  # User needs to authorize
+    
+#     return build('drive', 'v3', credentials=creds)
+
 def get_drive_service():
     """Get Google Drive service using OAuth 2.0"""
+    # Check if we're on Render without a token file
+    if os.environ.get('RENDER') and not os.path.exists(TOKEN_FILE):
+        print("🚨 RENDER: No Google Drive token found, uploads will fail")
+        return None
+    
     creds = None
     
     # Load credentials from token file
@@ -244,39 +275,39 @@ def get_or_create_folder(service, branch_name):
         print(f"❌ Folder creation error: {e}")
         return None
 
-def upload_to_local_fallback(file_path, file_name, branch_name):
-    """Fallback to local storage if Google Drive fails"""
-    try:
-        print(f"=== LOCAL STORAGE FALLBACK: {file_name} ===")
+# def upload_to_local_fallback(file_path, file_name, branch_name):
+#     """Fallback to local storage if Google Drive fails"""
+#     try:
+#         print(f"=== LOCAL STORAGE FALLBACK: {file_name} ===")
         
-        # Create branch folder
-        safe_branch = branch_name.replace(' ', '_').replace('/', '_')
-        local_folder = os.path.join(LOCAL_STORAGE, safe_branch)
-        os.makedirs(local_folder, exist_ok=True)
+#         # Create branch folder
+#         safe_branch = branch_name.replace(' ', '_').replace('/', '_')
+#         local_folder = os.path.join(LOCAL_STORAGE, safe_branch)
+#         os.makedirs(local_folder, exist_ok=True)
         
-        # Generate unique filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_id = str(uuid.uuid4())[:6]
-        safe_filename = secure_filename(file_name)
-        saved_filename = f"{timestamp}_{unique_id}_{safe_filename}"
+#         # Generate unique filename
+#         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+#         unique_id = str(uuid.uuid4())[:6]
+#         safe_filename = secure_filename(file_name)
+#         saved_filename = f"{timestamp}_{unique_id}_{safe_filename}"
         
-        dest_path = os.path.join(local_folder, saved_filename)
+#         dest_path = os.path.join(local_folder, saved_filename)
         
-        # Copy file to local storage
-        shutil.copy2(file_path, dest_path)
+#         # Copy file to local storage
+#         shutil.copy2(file_path, dest_path)
         
-        # Generate identifiers
-        file_id = f"local_{unique_id}"
-        drive_url = f"/local_files/{safe_branch}/{saved_filename}"
+#         # Generate identifiers
+#         file_id = f"local_{unique_id}"
+#         drive_url = f"/local_files/{safe_branch}/{saved_filename}"
         
-        print(f"✅ File stored locally at: {dest_path}")
-        print(f"   Access URL: {drive_url}")
+#         print(f"✅ File stored locally at: {dest_path}")
+#         print(f"   Access URL: {drive_url}")
         
-        return file_id, drive_url, None
+#         return file_id, drive_url, None
         
-    except Exception as e:
-        print(f"❌ Local storage error: {e}")
-        return None, None, str(e)
+#     except Exception as e:
+#         print(f"❌ Local storage error: {e}")
+#         return None, None, str(e)
 
 # ================== OAUTH AUTHORIZATION ROUTES ==================
 
@@ -1272,6 +1303,45 @@ def admin_upload():
     print(f"ADMIN UPLOAD COMPLETED")
     
     return redirect(f'/{ADMIN_SECRET_PATH}')
+
+@app.route('/admin/add-drive-resource', methods=['POST'])
+@login_required
+def add_drive_resource():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    
+    # Get form data
+    title = request.form.get('title')
+    branch = request.form.get('branch')
+    semester = request.form.get('semester')
+    subject = request.form.get('subject')
+    resource_type = request.form.get('resource_type')
+    year = request.form.get('year')
+    drive_url = request.form.get('drive_url')
+    description = request.form.get('description')
+    
+    # Create resource
+    resource = Resource(
+        title=title,
+        branch=branch,
+        semester=semester,
+        subject=subject,
+        resource_type=resource_type,
+        year=year,
+        drive_url=drive_url,
+        description=description,
+        uploader_id=current_user.id,
+        file_name=title,  # Use title as file name
+        file_type='drive_link',  # Mark as drive link
+        downloads=0,
+        views=0
+    )
+    
+    db.session.add(resource)
+    db.session.commit()
+    
+    flash('Resource added successfully!', 'success')
+    return redirect(url_for('admin_portal'))
 
 # ================== INITIALIZATION ==================
 

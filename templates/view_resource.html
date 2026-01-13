@@ -4,690 +4,75 @@
 
 {% block content %}
 <style>
-    .resource-badge {
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        padding: 6px 12px;
-        border-radius: 20px;
-    }
-    
-    .badge-notes {
-        background: linear-gradient(135deg, #4e54c8, #8f94fb);
-        color: white;
-    }
-    
-    .badge-pyq {
-        background: linear-gradient(135deg, #11998e, #38ef7d);
-        color: white;
-    }
-    
-    .badge-books {
-        background: linear-gradient(135deg, #f46b45, #eea849);
-        color: white;
-    }
-    
-    .badge-sample {
-        background: linear-gradient(135deg, #8e2de2, #4a00e0);
-        color: white;
-    }
-    
-    .stats-card {
+    .view-box {
+        width: 300px;
+        margin: 50px auto;
+        padding: 30px;
         background: #1a1a2e;
         border-radius: 12px;
-        padding: 1.5rem;
+        border: 2px solid #2d2d4d;
         text-align: center;
-        border: 1px solid #2d2d4d;
     }
     
-    .stats-card .number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        line-height: 1;
-        color: #00d4ff;
+    .view-title {
+        color: white;
+        font-size: 20px;
+        margin-bottom: 20px;
+        font-weight: 600;
     }
     
-    .preview-box {
-        border: 2px dashed #2d2d4d;
-        border-radius: 15px;
-        padding: 2rem;
-        text-align: center;
-        background: #16213e;
+    .view-button {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #00d4ff, #0099cc);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        text-decoration: none;
+        transition: 0.3s;
     }
     
-    .preview-box:hover {
-        border-color: #00d4ff;
-        background: #1a1a2e;
+    .view-button:hover {
+        background: linear-gradient(135deg, #0099cc, #0077aa);
+        transform: translateY(-2px);
     }
     
-    .preview-box.pdf {
-        border-color: #ff416c;
-        background: #1a1a2e;
-    }
-    
-    .preview-box.pdf:hover {
-        border-color: #ff416c;
-        background: #16213e;
-    }
-    
-    .preview-icon {
-        font-size: 4rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .preview-box.pdf .preview-icon {
-        color: #ff416c;
-    }
-    
-    .action-btn {
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 140px;
-    }
-    
-    .branch-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .subject-tag {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-        font-weight: 600;
-        padding: 6px 14px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .no-file-alert {
-        border-left: 4px solid #ffc107;
-        background: #1a1a2e;
-        border-color: #ff416c;
-    }
-    
-    .file-info-card {
-        background: #1a1a2e;
-        border-radius: 10px;
-        padding: 1.5rem;
-        border: 1px solid #2d2d4d;
-    }
-    
-    @media (max-width: 768px) {
-        .stats-card .number {
-            font-size: 2rem;
-        }
-        
-        .action-btn {
-            width: 100%;
-            margin-bottom: 10px;
-        }
+    .file-info {
+        margin-top: 15px;
+        color: #888;
+        font-size: 12px;
     }
 </style>
 
-<div class="container py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('resources') }}" class="text-decoration-none">📚 Resources</a></li>
-            <li class="breadcrumb-item active fw-bold">{{ resource.title[:30] }}{% if resource.title|length > 30 %}...{% endif %}</li>
-        </ol>
-    </nav>
+<div class="view-box">
+    <div class="view-title">{{ resource.title }}</div>
     
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            <!-- Header Section -->
-            <div class="card border-0 shadow-lg mb-4" style="border-radius: 15px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-                <div class="card-body p-4">
-                    <!-- Resource Type Badge and Date -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <span class="resource-badge {% if resource.resource_type == 'notes' %}badge-notes{% elif resource.resource_type == 'pyq' %}badge-pyq{% elif resource.resource_type == 'books' %}badge-books{% else %}badge-sample{% endif %}">
-                                <i class="fas fa-file-alt me-1"></i>{{ resource.resource_type|upper }}
-                            </span>
-                            {% if resource.year %}
-                            <span class="badge bg-dark text-light border ms-2" style="border-color: #2d2d4d !important;">
-                                <i class="fas fa-calendar-alt me-1"></i>{{ resource.year }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div class="text-muted">
-                            <small class="fw-medium">
-                                <i class="fas fa-clock me-1"></i>
-                                {{ resource.upload_date.strftime('%d %b %Y') }}
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <!-- Title -->
-                    <h1 class="h2 fw-bold mb-3 text-light">{{ resource.title }}</h1>
-                    
-                    <!-- Description -->
-                    {% if resource.description %}
-                    <div class="mb-4 p-3 rounded" style="background: rgba(0, 0, 0, 0.3);">
-                        <p class="mb-0 fw-medium text-light">{{ resource.description }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Tags -->
-                    <div class="d-flex flex-wrap align-items-center mb-4">
-                        {% if resource.branch %}
-                        <span class="branch-badge me-3 mb-2">
-                            <i class="fas fa-university me-1"></i>{{ resource.branch|upper }}
-                        </span>
-                        {% endif %}
-                        
-                        {% if resource.subject %}
-                        <span class="subject-tag me-3 mb-2">
-                            <i class="fas fa-book me-1"></i>{{ resource.subject }}
-                        </span>
-                        {% endif %}
-                        
-                        {% if resource.semester %}
-                        <span class="badge bg-info me-2 mb-2" style="background: linear-gradient(135deg, #00d4ff, #0099cc) !important;">
-                            <i class="fas fa-layer-group me-1"></i>Sem {{ resource.semester }}
-                        </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Stats Grid -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <div class="number">{{ resource.downloads }}</div>
-                                <small class="text-muted fw-medium">DOWNLOADS</small>
-                                <div class="mt-2">
-                                    <i class="fas fa-download fa-lg text-primary"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <div class="number">{{ resource.views }}</div>
-                                <small class="text-muted fw-medium">VIEWS</small>
-                                <div class="mt-2">
-                                    <i class="fas fa-eye fa-lg text-success"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <div class="number">{{ resource.rating if resource.rating else 'N/A' }}</div>
-                                <small class="text-muted fw-medium">RATING</small>
-                                <div class="mt-2">
-                                    <i class="fas fa-star fa-lg text-warning"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Check if file exists in Google Drive -->
-                    {% set has_file = resource.file_id and resource.file_name %}
-                    
-                    <!-- Action Buttons -->
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
-                        {% if has_file %}
-                        <!-- File exists on Google Drive -->
-                        <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                           class="btn btn-primary action-btn me-2" style="background: linear-gradient(135deg, #00d4ff, #0099cc); border: none;">
-                            <i class="fas fa-download"></i> Download Now
-                        </a>
-                        
-                        <!-- NEW: Direct View button (opens in new tab) -->
-                        <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" 
-                           target="_blank"
-                           class="btn btn-outline-primary action-btn me-2"
-                           style="border-color: #00d4ff; color: #00d4ff;">
-                            <i class="fas fa-external-link-alt"></i> Open in Google Drive
-                        </a>
-                        
-                        {% if resource.file_name.lower().endswith('.pdf') %}
-                        <!-- PDF Preview button (embedded viewer) -->
-                        <button class="btn btn-outline-danger action-btn me-2" 
-                                onclick="openPreview('{{ resource.id }}')"
-                                data-bs-toggle="modal" data-bs-target="#pdfPreviewModal">
-                            <i class="fas fa-eye"></i> Preview PDF
-                        </button>
-                        {% endif %}
-                        
-                        {% else %}
-                        <!-- No file available -->
-                        <button class="btn btn-secondary action-btn me-2" disabled style="background: #2d2d4d; border-color: #2d2d4d;">
-                            <i class="fas fa-times-circle"></i> No File Available
-                        </button>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- File Preview Section -->
-                    {% if has_file %}
-                        {% if resource.file_name.lower().endswith('.pdf') %}
-                        <!-- PDF Preview Box -->
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3 d-flex align-items-center text-light">
-                                <i class="fas fa-file-pdf text-danger me-2"></i>PDF Preview
-                            </h5>
-                            
-                            <div class="preview-box pdf" 
-                                 onclick="openPreview('{{ resource.id }}')"
-                                 data-bs-toggle="modal" 
-                                 data-bs-target="#pdfPreviewModal">
-                                <div class="preview-icon">
-                                    <i class="fas fa-file-pdf"></i>
-                                </div>
-                                <h5 class="fw-bold text-light">{{ resource.file_name }}</h5>
-                                <p class="text-muted mb-3">Click to preview this PDF document</p>
-                                <span class="badge bg-danger">
-                                    <i class="fas fa-expand-alt me-1"></i>Click to Preview
-                                </span>
-                            </div>
-                            
-                            <!-- NEW: Direct Google Drive Link -->
-                            <div class="mt-3 text-center">
-                                <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" 
-                                   target="_blank"
-                                   class="text-decoration-none text-info small">
-                                    <i class="fas fa-external-link-alt me-1"></i>Open directly in Google Drive
-                                </a>
-                            </div>
-                        </div>
-                        {% else %}
-                        <!-- Non-PDF File Preview -->
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3 text-light">
-                                <i class="fas fa-file text-primary me-2"></i>File Preview
-                            </h5>
-                            <div class="preview-box">
-                                <div class="preview-icon">
-                                    {% if resource.file_name.lower().endswith(('.doc', '.docx')) %}
-                                    <i class="fas fa-file-word text-primary"></i>
-                                    {% elif resource.file_name.lower().endswith('.zip') %}
-                                    <i class="fas fa-file-archive text-warning"></i>
-                                    {% else %}
-                                    <i class="fas fa-file text-secondary"></i>
-                                    {% endif %}
-                                </div>
-                                <h5 class="fw-bold text-light">{{ resource.file_name }}</h5>
-                                <p class="text-muted mb-3">This file can only be viewed after download</p>
-                                <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                                   class="btn btn-primary action-btn" style="background: linear-gradient(135deg, #00d4ff, #0099cc); border: none;">
-                                    <i class="fas fa-download me-2"></i>Download to View
-                                </a>
-                            </div>
-                            
-                            <!-- NEW: Direct Google Drive Link for non-PDF -->
-                            <div class="mt-3 text-center">
-                                <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" 
-                                   target="_blank"
-                                   class="text-decoration-none text-info small">
-                                    <i class="fas fa-external-link-alt me-1"></i>View in Google Drive
-                                </a>
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% else %}
-                    <!-- No file available warning -->
-                    <div class="mb-4">
-                        <div class="alert alert-warning no-file-alert">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
-                                <div>
-                                    <h5 class="alert-heading mb-1 text-light">File Not Available</h5>
-                                    <p class="mb-0 text-light">This resource doesn't have an attached file. Please contact the uploader or administrator.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- File Information -->
-                    <div class="mt-4">
-                        <h5 class="fw-bold mb-3 d-flex align-items-center text-light">
-                            <i class="fas fa-info-circle text-info me-2"></i>File Details
-                        </h5>
-                        <div class="file-info-card">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-file-signature text-primary me-3 fa-lg"></i>
-                                        <div>
-                                            <small class="text-muted">File Name</small>
-                                            <p class="mb-0 fw-bold text-light">{{ resource.file_name if resource.file_name else 'Not Available' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-hashtag text-success me-3 fa-lg"></i>
-                                        <div>
-                                            <small class="text-muted">Storage</small>
-                                            <p class="mb-0 fw-bold text-success">
-                                                {% if resource.file_id %}
-                                                    <i class="fas fa-cloud me-1"></i>Google Drive
-                                                {% else %}
-                                                    Not Available
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-file-alt text-warning me-3 fa-lg"></i>
-                                        <div>
-                                            <small class="text-muted">File Type</small>
-                                            <p class="mb-0 fw-bold text-warning">{{ resource.file_type if resource.file_type else 'Not Available' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-weight text-info me-3 fa-lg"></i>
-                                        <div>
-                                            <small class="text-muted">File Size</small>
-                                            <p class="mb-0 fw-bold text-info">{{ resource.file_size if resource.file_size else 'Not Available' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- NEW: Google Drive URL Display -->
-                                {% if resource.drive_url %}
-                                <div class="col-12 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-link text-info me-3 fa-lg"></i>
-                                        <div style="width: 100%;">
-                                            <small class="text-muted">Google Drive Link</small>
-                                            <div class="input-group mt-1">
-                                                <input type="text" 
-                                                       class="form-control bg-dark text-light border-secondary" 
-                                                       value="{{ resource.drive_url }}" 
-                                                       id="driveLink"
-                                                       readonly
-                                                       style="font-size: 0.85rem;">
-                                                <button class="btn btn-outline-secondary" 
-                                                        type="button"
-                                                        onclick="copyDriveLink()">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    {% if resource.drive_url %}
+        <a href="{{ resource.drive_url }}" target="_blank" class="view-button">
+            <i class="fas fa-external-link-alt"></i> View File in Drive
+        </a>
         
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Uploader Info -->
-            <div class="card border-0 shadow-lg mb-4" style="border-radius: 15px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 d-flex align-items-center text-light">
-                        <i class="fas fa-user-circle text-primary me-2"></i>Uploader Info
-                    </h5>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                             style="width: 60px; height: 60px; font-size: 1.5rem; background: linear-gradient(135deg, #00d4ff, #0099cc);">
-                            {{ (resource.uploader.username[0] if resource.uploader else 'S')|upper }}
-                        </div>
-                        <div>
-                            <p class="mb-0 fw-bold fs-5 text-light">{{ resource.uploader.username if resource.uploader else 'System' }}</p>
-                            <small class="text-muted">Uploaded {{ resource.upload_date.strftime('%d %b %Y') }}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="alert {% if has_file %}alert-success{% else %}alert-warning{% endif %} border mt-3" style="background: rgba(0, 0, 0, 0.3); border-color: {% if has_file %}#2ecc71{% else %}#f39c12{% endif %} !important;">
-                        <div class="d-flex">
-                            <i class="fas {% if has_file %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2 mt-1" style="color: {% if has_file %}#2ecc71{% else %}#f39c12{% endif %};"></i>
-                            <div>
-                                <small class="fw-bold text-light">
-                                    {% if has_file %}Verified Resource{% else %}Resource Status{% endif %}
-                                </small>
-                                <p class="mb-0 text-muted small">
-                                    {% if has_file %}
-                                        This file is stored securely on Google Drive and is ready for download.
-                                    {% else %}
-                                        This resource is missing file attachment.
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- NEW: Quick Action Buttons -->
-                    {% if has_file %}
-                    <div class="mt-3">
-                        <div class="list-group list-group-flush">
-                            <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                               class="list-group-item list-group-item-action border-0 py-2" 
-                               style="background: transparent; color: #ddd;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-download text-primary me-3"></i>
-                                    <div>
-                                        <small class="fw-bold">Download File</small>
-                                        <div class="text-muted small">Direct download from Google Drive</div>
-                                    </div>
-                                </div>
-                            </a>
-                            <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" 
-                               target="_blank"
-                               class="list-group-item list-group-item-action border-0 py-2" 
-                               style="background: transparent; color: #ddd;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-external-link-alt text-success me-3"></i>
-                                    <div>
-                                        <small class="fw-bold">Open in Google Drive</small>
-                                        <div class="text-muted small">View in new tab</div>
-                                    </div>
-                                </div>
-                            </a>
-                            {% if resource.file_name.lower().endswith('.pdf') %}
-                            <button class="list-group-item list-group-item-action border-0 py-2" 
-                                    style="background: transparent; color: #ddd; cursor: pointer;"
-                                    onclick="openPreview('{{ resource.id }}')"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#pdfPreviewModal">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-eye text-danger me-3"></i>
-                                    <div>
-                                        <small class="fw-bold">Preview PDF</small>
-                                        <div class="text-muted small">Embedded viewer</div>
-                                    </div>
-                                </div>
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Related Resources -->
-            {% if related_resources %}
-            <div class="card border-0 shadow-lg" style="border-radius: 15px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 d-flex align-items-center text-light">
-                        <i class="fas fa-link text-success me-2"></i>Related Resources
-                    </h5>
-                    <div class="list-group list-group-flush">
-                        {% for related in related_resources %}
-                        <a href="{{ url_for('view_resource', resource_id=related.id) }}" 
-                           class="list-group-item list-group-item-action border-0 py-3" style="background: transparent; color: #ddd;">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="fw-bold mb-1">{{ related.title[:40] }}{% if related.title|length > 40 %}...{% endif %}</h6>
-                                    <small class="text-muted">
-                                        <span class="badge bg-dark text-light me-1">{{ related.resource_type|upper }}</span>
-                                        <span class="me-1">•</span>
-                                        {{ related.subject if related.subject else 'General' }}
-                                    </small>
-                                </div>
-                                <span class="badge bg-primary rounded-pill">{{ related.downloads }}</span>
-                            </div>
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
+        {% if resource.drive_url and '/view' in resource.drive_url %}
+            {% set download_url = resource.drive_url.replace('/view', '') + '?export=download' %}
+            <a href="{{ download_url }}" class="view-button" style="margin-top: 10px; background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                <i class="fas fa-download"></i> Download File
+            </a>
+        {% endif %}
+        
+        <div class="file-info">
+            Click to open in Google Drive
         </div>
-    </div>
-</div>
-
-<!-- PDF Preview Modal -->
-{% if has_file and resource.file_name.lower().endswith('.pdf') %}
-<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0" style="border-radius: 15px; background: #1a1a2e;">
-            <div class="modal-header text-white" style="border-radius: 15px 15px 0 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-bottom: 1px solid #2d2d4d;">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-file-pdf me-2 text-danger"></i>{{ resource.title }}
-                </h5>
-                <div>
-                    <button type="button" class="btn btn-sm btn-light me-2" onclick="printPDF()">
-                        <i class="fas fa-print me-1"></i>Print
-                    </button>
-                    <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" 
-                       target="_blank"
-                       class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-external-link-alt me-1"></i>Open in Drive
-                    </a>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-            </div>
-            <div class="modal-body p-0">
-                <div class="ratio ratio-16x9">
-                    <iframe id="pdfFrame" 
-                            src=""
-                            class="w-100 h-100"
-                            style="border: none; background: white;"
-                            allowfullscreen>
-                        <div class="d-flex justify-content-center align-items-center h-100" style="background: #1a1a2e;">
-                            <div class="text-center">
-                                <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
-                                <h5 class="text-light">Loading PDF Preview...</h5>
-                                <p class="text-muted">If the PDF doesn't load, <a href="{{ url_for('view_resource_direct', resource_id=resource.id) }}" target="_blank" onclick="event.stopPropagation();" class="text-primary">open in Google Drive</a>.</p>
-                            </div>
-                        </div>
-                    </iframe>
-                </div>
-            </div>
-            <div class="modal-footer" style="border-top: 1px solid #2d2d4d;">
-                <a href="{{ url_for('download_resource', resource_id=resource.id) }}" 
-                   class="btn btn-primary px-4" style="background: linear-gradient(135deg, #00d4ff, #0099cc); border: none;">
-                    <i class="fas fa-download me-2"></i>Download PDF
-                </a>
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-color: #2d2d4d; color: #ddd;">Close Preview</button>
-            </div>
+    {% else %}
+        <button class="view-button" style="background: #666; cursor: not-allowed;" disabled>
+            <i class="fas fa-times-circle"></i> No File Available
+        </button>
+        <div class="file-info">
+            This resource has no drive link
         </div>
-    </div>
+    {% endif %}
 </div>
-{% endif %}
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Open PDF Preview from Google Drive
-    function openPreview(resourceId) {
-        const pdfFrame = document.getElementById('pdfFrame');
-        if (pdfFrame) {
-            // Load PDF from Flask preview route
-            pdfFrame.src = `/preview/${resourceId}`;
-            
-            // Show loading state
-            const iframeDoc = pdfFrame.contentDocument || pdfFrame.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(`
-                <html>
-                    <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a2e;">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2 text-light">Loading PDF from Google Drive...</p>
-                        </div>
-                    </body>
-                </html>
-            `);
-            iframeDoc.close();
-        }
-    }
-    
-    // Print PDF
-    function printPDF() {
-        const pdfFrame = document.getElementById('pdfFrame');
-        if (pdfFrame && pdfFrame.contentWindow) {
-            try {
-                pdfFrame.contentWindow.print();
-            } catch (e) {
-                alert('Cannot print at the moment. Please try downloading the file first.');
-            }
-        }
-    }
-    
-    // Copy Google Drive link to clipboard
-    function copyDriveLink() {
-        const driveLinkInput = document.getElementById('driveLink');
-        if (driveLinkInput) {
-            driveLinkInput.select();
-            driveLinkInput.setSelectionRange(0, 99999); // For mobile devices
-            
-            try {
-                navigator.clipboard.writeText(driveLinkInput.value).then(() => {
-                    // Show temporary feedback
-                    const copyBtn = driveLinkInput.nextElementSibling.querySelector('i');
-                    const originalClass = copyBtn.className;
-                    copyBtn.className = 'fas fa-check text-success';
-                    
-                    setTimeout(() => {
-                        copyBtn.className = originalClass;
-                    }, 2000);
-                });
-            } catch (err) {
-                // Fallback for older browsers
-                document.execCommand('copy');
-                const copyBtn = driveLinkInput.nextElementSibling.querySelector('i');
-                const originalClass = copyBtn.className;
-                copyBtn.className = 'fas fa-check text-success';
-                
-                setTimeout(() => {
-                    copyBtn.className = originalClass;
-                }, 2000);
-            }
-        }
-    }
-    
-    // Handle modal hidden event
-    document.addEventListener('DOMContentLoaded', function() {
-        const pdfModal = document.getElementById('pdfPreviewModal');
-        if (pdfModal) {
-            pdfModal.addEventListener('hidden.bs.modal', function () {
-                const pdfFrame = document.getElementById('pdfFrame');
-                if (pdfFrame) {
-                    pdfFrame.src = ''; // Clear iframe source when modal closes
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

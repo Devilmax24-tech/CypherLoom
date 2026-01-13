@@ -650,25 +650,20 @@
         
         <!-- Drive Status -->
         <div class="drive-status-box">
-            <div class="status-label">Google Drive Status</div>
-            <div class="status-indicator {% if not drive_status %}status-offline{% endif %}">
-                <i class="fab fa-google-drive me-2"></i>
-                {% if drive_status %}CONNECTED{% else %}NOT CONNECTED{% endif %}
-            </div>
-            <div class="mt-3">
-                <a href="{{ url_for('authorize') }}" class="btn-primary" style="padding: 12px; font-size: 14px; width: 100%;">
-                    <i class="fas fa-plug me-2"></i> Connect Drive
-                </a>
+            <div class="status-label">Manual Drive System</div>
+            <div class="status-indicator">
+                <i class="fas fa-link me-2"></i>
+                PASTE DRIVE URLS
             </div>
         </div>
         
         <!-- Navigation Links -->
         <div class="sidebar-links">
             <a href="#upload" class="sidebar-link active">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Files
+                <i class="fas fa-link"></i> Add Drive Links
             </a>
             <a href="#recent" class="sidebar-link">
-                <i class="fas fa-history"></i> Recent Uploads
+                <i class="fas fa-history"></i> Recent Links
             </a>
             <a href="#users" class="sidebar-link">
                 <i class="fas fa-users"></i> User Management
@@ -691,45 +686,46 @@
         <!-- Header -->
         <div class="content-header">
             <div class="page-title">
-                <i class="fas fa-cloud-upload-alt"></i>
-                Upload to Google Drive
+                <i class="fas fa-link"></i>
+                Add Google Drive Links
             </div>
         </div>
         
-        <!-- UPLOAD CARD -->
+        <!-- SIMPLE FORM CARD -->
         <div class="card" id="upload">
             <div class="card-header">
-                <i class="fas fa-file-upload"></i>
-                <h3>Upload Resources</h3>
+                <i class="fas fa-link"></i>
+                <h3>Add Resource with Drive Link</h3>
             </div>
             
-            <form id="uploadForm" method="POST" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
-                <!-- Hidden Fields -->
-                <input type="hidden" id="formBranch" name="branch" value="">
-                <input type="hidden" id="formSemester" name="semester" value="">
-                <input type="hidden" id="formSubject" name="subject" value="">
-                
-                <!-- Form Grid -->
+            <form method="POST" action="{{ url_for('add_drive_resource') }}">
                 <div class="form-grid">
+                    <!-- Resource Title -->
+                    <div class="form-group">
+                        <label class="form-label required">Resource Title</label>
+                        <input type="text" class="form-control" name="title" 
+                               placeholder="e.g., Calculus Complete Notes" required>
+                    </div>
+                    
                     <!-- Branch -->
                     <div class="form-group">
                         <label class="form-label required">Branch</label>
-                        <select class="form-select" id="branchSelect" required>
+                        <select class="form-select" name="branch" required>
                             <option value="">Select Branch</option>
                             <option value="CSE">Computer Science (CSE)</option>
                             <option value="AIML">Artificial Intelligence (AIML)</option>
                             <option value="ECE">Electronics & Communication (ECE)</option>
                             <option value="EE">Electrical (EE)</option>
-                            <option value="CIVIL">Civil </option>
-                            <option value="MECH">Mechanical </option>
-                            <option value="BIO">Biotech</option>
+                            <option value="CIVIL">Civil</option>
+                            <option value="MECH">Mechanical</option>
+                            <option value="BIOTECH">Biotech</option>
                         </select>
                     </div>
                     
                     <!-- Semester -->
                     <div class="form-group">
                         <label class="form-label required">Semester</label>
-                        <select class="form-select" id="semesterSelect" required>
+                        <select class="form-select" name="semester" required>
                             <option value="">Select Semester</option>
                             {% for i in range(1, 9) %}
                             <option value="{{ i }}">Semester {{ i }}</option>
@@ -737,95 +733,72 @@
                         </select>
                     </div>
                     
-                    <!-- Type -->
-                    <div class="form-group">
-                        <label class="form-label required">Material Type</label>
-                        <select class="form-select" id="category" name="category" required>
-                            <option value="">Select Type</option>
-                            <option value="PYQ">Previous Year Papers (PYQ)</option>
-                            <option value="NOTES">Study Notes</option>
-                            <option value="BOOKS">Books</option>
-                            <option value="GENERAL">General</option>
-                        </select>
-                    </div>
-                    
                     <!-- Subject -->
                     <div class="form-group">
-                        <label class="form-label required">Subject Name</label>
-                        <input type="text" class="form-control" id="subjectInput" 
-                               placeholder="Enter subject name" required>
+                        <label class="form-label required">Subject</label>
+                        <input type="text" class="form-control" name="subject" 
+                               placeholder="e.g., Mathematics, Physics" required>
+                    </div>
+                    
+                    <!-- Resource Type -->
+                    <div class="form-group">
+                        <label class="form-label required">Type</label>
+                        <select class="form-select" name="resource_type" required>
+                            <option value="">Select Type</option>
+                            <option value="notes">Study Notes</option>
+                            <option value="pyq">Previous Year Papers</option>
+                            <option value="books">Books</option>
+                            <option value="sample">Sample Papers</option>
+                        </select>
                     </div>
                     
                     <!-- Year -->
                     <div class="form-group">
-                        <label class="form-label">Academic Year</label>
-                        <select class="form-select" id="year" name="year">
-                            {% for y in range(2022, 2027) %}
-                            <option value="{{ y }}" {% if y == 2025 %}selected{% endif %}>{{ y }}-{{ y+1 }}</option>
+                        <label class="form-label">Year</label>
+                        <select class="form-select" name="year">
+                            <option value="">Select Year</option>
+                            {% for y in range(2020, 2027) %}
+                            <option value="{{ y }}">{{ y }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     
+                    <!-- GOOGLE DRIVE URL -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label required">Google Drive URL</label>
+                        <input type="url" class="form-control" name="drive_url" 
+                               placeholder="https://drive.google.com/file/d/YOUR_FILE_ID/view"
+                               required>
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            Paste the shareable Google Drive link (make sure sharing is enabled)
+                        </small>
+                    </div>
+                    
                     <!-- Description -->
-                    <div class="form-group">
+                    <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="2" placeholder="Additional details..."></textarea>
+                        <textarea class="form-control" name="description" rows="2"
+                                  placeholder="Brief description about this resource..."></textarea>
                     </div>
                 </div>
-                
-                <!-- Upload Area -->
-                <div class="upload-area" id="dropArea" onclick="document.getElementById('files').click()">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="upload-title">Drop Files Here</div>
-                    <div class="upload-subtitle">Drag & drop or click to browse</div>
-                    <div class="file-tags">
-                        <span class="file-tag">PDF</span>
-                        <span class="file-tag">DOC</span>
-                        <span class="file-tag">IMAGE</span>
-                        <span class="file-tag">PPT</span>
-                        <span class="file-tag">ZIP</span>
-                    </div>
-                    <div style="color: #2ecc71; font-size: 13px; font-weight: 600;">
-                        <i class="fas fa-cloud me-1"></i> Files upload to Google Drive
-                    </div>
-                </div>
-                
-                <!-- Hidden File Input -->
-                <input type="file" id="files" name="files" multiple style="display: none;" 
-                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx,.zip" 
-                       onchange="updateFileList()">
-                
-                <!-- File List -->
-                <div id="fileList" class="file-list-container"></div>
-                
-                <!-- Progress Bar -->
-                <div class="progress-container" id="progressContainer">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                
-                <!-- Status Message -->
-                <div id="uploadStatus" class="alert"></div>
                 
                 <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button type="button" class="btn-secondary" onclick="clearAll()">
-                        <i class="fas fa-times me-2"></i> Clear All
+                <div class="action-buttons" style="margin-top: 30px;">
+                    <button type="reset" class="btn-secondary">
+                        <i class="fas fa-times me-2"></i> Clear
                     </button>
-                    <button type="submit" id="uploadBtn" class="btn-primary" disabled>
-                        <i class="fas fa-cloud-upload-alt me-2"></i> Upload to Google Drive
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save me-2"></i> Save Resource
                     </button>
                 </div>
             </form>
         </div>
         
-        <!-- RECENT UPLOADS -->
+        <!-- RECENT RESOURCES -->
         <div class="card" id="recent">
             <div class="card-header">
                 <i class="fas fa-history"></i>
-                <h3>Recent Uploads</h3>
+                <h3>Recently Added Resources</h3>
             </div>
             
             {% if all_resources %}
@@ -833,11 +806,12 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>File</th>
+                            <th>Title</th>
+                            <th>Drive Link</th>
                             <th>Branch</th>
                             <th>Subject</th>
+                            <th>Type</th>
                             <th>Date</th>
-                            <th>Downloads</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -845,24 +819,32 @@
                         {% for resource in all_resources[:10] %}
                         <tr>
                             <td>
-                                <div class="file-info">
-                                    <i class="fas fa-file file-icon"></i>
-                                    <div>
-                                        <div class="file-name">{{ resource.file_name|truncate(20) }}</div>
-                                        <div class="file-size">{{ resource.file_size }}</div>
-                                    </div>
+                                <strong>{{ resource.title|truncate(25) }}</strong>
+                                <div style="font-size: 12px; color: #888; margin-top: 3px;">
+                                    {{ resource.description|truncate(30) if resource.description else '' }}
                                 </div>
+                            </td>
+                            <td>
+                                {% if resource.drive_url %}
+                                    <a href="{{ resource.drive_url }}" target="_blank" 
+                                       class="btn-primary" style="padding: 6px 12px; font-size: 12px;">
+                                        <i class="fas fa-external-link-alt me-1"></i>Open
+                                    </a>
+                                {% else %}
+                                    <span class="badge badge-danger">No link</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="badge badge-primary">{{ resource.branch|upper if resource.branch else 'GEN' }}</span>
                             </td>
                             <td>{{ resource.subject|truncate(15) }}</td>
+                            <td>
+                                <span class="badge badge-warning">{{ resource.resource_type|upper }}</span>
+                            </td>
                             <td>{{ resource.upload_date.strftime('%d/%m/%y') }}</td>
                             <td>
-                                <span class="badge badge-success">{{ resource.downloads }}</span>
-                            </td>
-                            <td>
-                                <form action="{{ url_for('delete_resource', resource_id=resource.id) }}" method="POST">
+                                <form action="{{ url_for('delete_resource', resource_id=resource.id) }}" method="POST" 
+                                      onsubmit="return confirm('Delete this resource?');" style="display: inline;">
                                     <button type="submit" class="btn-danger">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -876,7 +858,7 @@
             {% else %}
             <div style="text-align: center; padding: 40px;">
                 <i class="fas fa-inbox fa-3x" style="color: #666; margin-bottom: 20px;"></i>
-                <div style="color: #888; font-size: 16px;">No uploads yet</div>
+                <div style="color: #888; font-size: 16px;">No resources added yet</div>
             </div>
             {% endif %}
         </div>
@@ -936,7 +918,8 @@
                             </td>
                             <td>
                                 {% if not user.is_admin %}
-                                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST">
+                                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" 
+                                      onsubmit="return confirm('Delete this user?');">
                                     <button type="submit" class="btn-danger">
                                         <i class="fas fa-trash me-1"></i> Delete
                                     </button>
@@ -963,7 +946,8 @@
                 gap: 15px;
                 margin-top: 20px;
             ">
-                <form action="{{ url_for('clear_old_files') }}" method="POST">
+                <form action="{{ url_for('clear_old_files') }}" method="POST" 
+                      onsubmit="return confirm('Clear all temporary files?');">
                     <button type="submit" class="btn-danger" style="width: 100%; padding: 14px;">
                         <i class="fas fa-broom me-2"></i> Clear Temp Files
                     </button>
@@ -984,285 +968,26 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    // File management
-    let selectedFiles = [];
+// Simple form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
     
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateFileList();
+    form.addEventListener('submit', function(e) {
+        const driveUrl = form.querySelector('input[name="drive_url"]').value;
         
-        // Event listeners for form fields
-        document.getElementById('branchSelect').addEventListener('change', updateFormData);
-        document.getElementById('semesterSelect').addEventListener('change', updateFormData);
-        document.getElementById('category').addEventListener('change', updateFormData);
-        document.getElementById('subjectInput').addEventListener('input', updateFormData);
-        
-        // Setup drag and drop
-        setupDragAndDrop();
-        
-        // Setup sidebar navigation
-        setupNavigation();
-    });
-    
-    // Update hidden form fields
-    function updateFormData() {
-        const branch = document.getElementById('branchSelect').value.toUpperCase();
-        const semester = document.getElementById('semesterSelect').value;
-        const subject = document.getElementById('subjectInput').value;
-        
-        document.getElementById('formBranch').value = branch;
-        document.getElementById('formSemester').value = semester;
-        document.getElementById('formSubject').value = subject;
-        
-        checkUploadReady();
-    }
-    
-    // Check if upload button should be enabled
-    function checkUploadReady() {
-        const branch = document.getElementById('branchSelect').value;
-        const semester = document.getElementById('semesterSelect').value;
-        const category = document.getElementById('category').value;
-        const subject = document.getElementById('subjectInput').value;
-        const hasFiles = selectedFiles.length > 0;
-        
-        const isReady = branch && semester && category && subject && hasFiles;
-        document.getElementById('uploadBtn').disabled = !isReady;
-    }
-    
-    // Update file list display
-    function updateFileList() {
-        const fileInput = document.getElementById('files');
-        const fileListDiv = document.getElementById('fileList');
-        
-        selectedFiles = Array.from(fileInput.files);
-        fileListDiv.innerHTML = '';
-        
-        if (selectedFiles.length > 0) {
-            selectedFiles.forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.innerHTML = `
-                    <div class="file-info">
-                        <i class="fas fa-file file-icon"></i>
-                        <div>
-                            <div class="file-name">${file.name}</div>
-                            <div class="file-size">${formatFileSize(file.size)}</div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-danger" onclick="removeFile(${index})" style="padding: 6px 12px;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                fileListDiv.appendChild(fileItem);
-            });
-        } else {
-            fileListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">No files selected</div>';
-        }
-        
-        checkUploadReady();
-    }
-    
-    // Format file size
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    
-    // Remove file from list
-    function removeFile(index) {
-        selectedFiles.splice(index, 1);
-        
-        // Update file input
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('files').files = dataTransfer.files;
-        
-        updateFileList();
-    }
-    
-    // Clear all form data
-    function clearAll() {
-        selectedFiles = [];
-        document.getElementById('files').value = '';
-        document.getElementById('branchSelect').value = '';
-        document.getElementById('semesterSelect').value = '';
-        document.getElementById('category').value = '';
-        document.getElementById('subjectInput').value = '';
-        document.getElementById('description').value = '';
-        document.getElementById('year').value = new Date().getFullYear();
-        
-        document.getElementById('formBranch').value = '';
-        document.getElementById('formSemester').value = '';
-        document.getElementById('formSubject').value = '';
-        
-        updateFileList();
-    }
-    
-    // Setup drag and drop
-    function setupDragAndDrop() {
-        const dropArea = document.getElementById('dropArea');
-        
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-        
-        // Highlight drop area on drag over
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, function() {
-                dropArea.style.borderColor = '#00d4ff';
-                dropArea.style.background = '#151820';
-            }, false);
-        });
-        
-        // Remove highlight
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, function() {
-                dropArea.style.borderColor = '#1a1d29';
-                dropArea.style.background = '#0f1117';
-            }, false);
-        });
-        
-        // Handle dropped files
-        dropArea.addEventListener('drop', function(e) {
-            const files = e.dataTransfer.files;
-            
-            // Update file input
-            const dataTransfer = new DataTransfer();
-            for (let i = 0; i < files.length; i++) {
-                dataTransfer.items.add(files[i]);
-            }
-            
-            const fileInput = document.getElementById('files');
-            fileInput.files = dataTransfer.files;
-            
-            // Trigger change event
-            const event = new Event('change', { bubbles: true });
-            fileInput.dispatchEvent(event);
-        }, false);
-    }
-    
-    // Setup sidebar navigation
-    function setupNavigation() {
-        const links = document.querySelectorAll('.sidebar-link');
-        const sections = document.querySelectorAll('.card');
-        
-        links.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all links
-                links.forEach(l => l.classList.remove('active'));
-                
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                // Scroll to section
-                const targetId = this.getAttribute('href').substring(1);
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    targetSection.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-    }
-    
-    // Form submission
-    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        // Validate form
-        const branch = document.getElementById('branchSelect').value;
-        const semester = document.getElementById('semesterSelect').value;
-        const category = document.getElementById('category').value;
-        const subject = document.getElementById('subjectInput').value;
-        
-        if (!branch || !semester || !category || !subject) {
-            showAlert('Please fill all required fields', 'danger');
+        if (!driveUrl.includes('drive.google.com')) {
+            e.preventDefault();
+            alert('❌ Please enter a valid Google Drive URL');
             return;
         }
         
-        if (selectedFiles.length === 0) {
-            showAlert('Please select files to upload', 'warning');
-            return;
-        }
-        
-        const formData = new FormData(this);
-        const uploadBtn = document.getElementById('uploadBtn');
-        const progressBar = document.getElementById('progressBar');
-        const progressContainer = document.getElementById('progressContainer');
-        const uploadStatus = document.getElementById('uploadStatus');
-        
-        // Show progress
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        uploadStatus.style.display = 'none';
-        
-        // Disable button
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Uploading...';
-        
-        try {
-            const response = await fetch('{{ url_for("admin_upload") }}', {
-                method: 'POST',
-                body: formData
-            });
-            
-            // Show progress animation
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                progressBar.style.width = progress + '%';
-                if (progress >= 90) clearInterval(progressInterval);
-            }, 200);
-            
-            if (response.ok) {
-                progressBar.style.width = '100%';
-                showAlert('Files uploaded successfully to Google Drive!', 'success');
-                
-                // Refresh page after delay
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                throw new Error('Upload failed');
-            }
-        } catch (error) {
-            showAlert('Upload failed: ' + error.message, 'danger');
-        } finally {
-            setTimeout(() => {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i> Upload to Google Drive';
-                progressContainer.style.display = 'none';
-            }, 3000);
-        }
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Saving...';
     });
-    
-    // Show alert message
-    function showAlert(message, type) {
-        const uploadStatus = document.getElementById('uploadStatus');
-        const typeClass = type === 'success' ? 'alert-success' : 
-                         type === 'warning' ? 'alert-warning' : 'alert-danger';
-        const icon = type === 'success' ? 'fa-check-circle' : 
-                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle';
-        
-        uploadStatus.className = `alert ${typeClass}`;
-        uploadStatus.innerHTML = `
-            <i class="fas ${icon} me-2"></i>
-            ${message}
-            ${type === 'success' ? '<div style="margin-top: 10px;"><a href="#" onclick="location.reload()" style="color: inherit; text-decoration: underline;">Refresh page</a></div>' : ''}
-        `;
-        uploadStatus.style.display = 'block';
-    }
+});
 </script>
 {% endblock %}
