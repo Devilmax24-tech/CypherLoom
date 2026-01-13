@@ -4,75 +4,423 @@
 
 {% block content %}
 <style>
-    .view-box {
-        width: 300px;
-        margin: 50px auto;
-        padding: 30px;
-        background: #1a1a2e;
-        border-radius: 12px;
-        border: 2px solid #2d2d4d;
+    :root {
+        --primary: #00d4ff;
+        --dark-bg: #0a0a0f;
+        --card-bg: #1a1a2e;
+        --text-light: #ffffff;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    /* FIXED: MORE SPACING IN HEADER */
+    .header {
+        background: var(--card-bg);
+        padding: 25px 15px; /* INCREASED VERTICAL PADDING */
         text-align: center;
+        border-bottom: 2px solid var(--primary);
+        min-height: 130px; /* ADDED MINIMUM HEIGHT */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     
-    .view-title {
-        color: white;
-        font-size: 20px;
-        margin-bottom: 20px;
+    .title {
+        font-size: 20px; /* SLIGHTLY LARGER */
         font-weight: 600;
+        margin: 0 0 20px 0; /* ADDED BOTTOM MARGIN */
+        color: var(--text-light);
+        padding: 0 10px;
     }
     
-    .view-button {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #00d4ff, #0099cc);
+    /* FIXED: BETTER BUTTON SPACING */
+    .buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px; /* INCREASED GAP */
+        margin-top: 15px; /* ADDED TOP MARGIN */
+    }
+    
+    .btn {
+        padding: 12px 30px; /* INCREASED PADDING */
+        background: var(--primary);
         color: white;
         border: none;
         border-radius: 8px;
-        font-size: 16px;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px; /* INCREASED GAP */
         text-decoration: none;
-        transition: 0.3s;
+        font-size: 15px; /* SLIGHTLY LARGER */
+        transition: 0.2s;
+        min-width: 150px; /* MINIMUM WIDTH */
+        justify-content: center;
     }
     
-    .view-button:hover {
-        background: linear-gradient(135deg, #0099cc, #0077aa);
+    .btn:hover {
+        background: #0099cc;
         transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
     }
     
-    .file-info {
-        margin-top: 15px;
-        color: #888;
-        font-size: 12px;
+    .btn-dark {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--primary); /* THICKER BORDER */
+    }
+    
+    .btn-dark:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* ADJUSTED PDF CONTAINER HEIGHT */
+    #pdfContainer {
+        width: 100%;
+        height: calc(100vh - 150px); /* ADJUSTED FOR TALLER HEADER */
+        position: relative;
+    }
+    
+    .pdf-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+        background: white;
+    }
+    
+    .dark-btn {
+        position: fixed;
+        bottom: 25px; /* INCREASED */
+        right: 25px; /* INCREASED */
+        width: 55px; /* LARGER */
+        height: 55px; /* LARGER */
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 22px; /* LARGER */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    }
+    
+    .dark-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    /* MOBILE FIXES */
+    @media (max-width: 768px) {
+        .header {
+            padding: 20px 12px; /* ADJUSTED FOR MOBILE */
+            min-height: 140px; /* TALLER ON MOBILE */
+        }
+        
+        .title {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .buttons {
+            flex-direction: column;
+            align-items: center;
+            gap: 12px; /* ADJUSTED GAP */
+        }
+        
+        .btn {
+            width: 90%;
+            max-width: 280px;
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+        
+        #pdfContainer {
+            height: calc(100vh - 160px); /* ADJUSTED */
+        }
+        
+        .dark-btn {
+            width: 50px;
+            height: 50px;
+            bottom: 20px;
+            right: 20px;
+            font-size: 20px;
+        }
+    }
+    
+    /* VERY SMALL SCREENS */
+    @media (max-width: 480px) {
+        .header {
+            padding: 15px 10px;
+            min-height: 130px;
+        }
+        
+        .title {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            font-size: 13px;
+            min-width: 130px;
+        }
+        
+        #pdfContainer {
+            height: calc(100vh - 150px);
+        }
+    }
+    
+    /* FULLSCREEN MODE */
+    body:fullscreen #pdfContainer,
+    body:-webkit-full-screen #pdfContainer,
+    body:-moz-full-screen #pdfContainer {
+        height: 100vh;
+    }
+    
+    body:fullscreen .header,
+    body:-webkit-full-screen .header,
+    body:-moz-full-screen .header {
+        display: none;
+    }
+    
+    body:fullscreen .dark-btn,
+    body:-webkit-full-screen .dark-btn,
+    body:-moz-full-screen .dark-btn {
+        display: none;
+    }
+    
+    /* LOADING STATE */
+    .btn-loading {
+        opacity: 0.8;
+        cursor: wait;
     }
 </style>
 
-<div class="view-box">
-    <div class="view-title">{{ resource.title }}</div>
-    
-    {% if resource.drive_url %}
-        <a href="{{ resource.drive_url }}" target="_blank" class="view-button">
-            <i class="fas fa-external-link-alt"></i> View File in Drive
-        </a>
-        
-        {% if resource.drive_url and '/view' in resource.drive_url %}
+<div class="header">
+    <h1 class="title">{{ resource.title }}</h1>
+    <div class="buttons">
+        {% if resource.drive_url %}
             {% set download_url = resource.drive_url.replace('/view', '') + '?export=download' %}
-            <a href="{{ download_url }}" class="view-button" style="margin-top: 10px; background: linear-gradient(135deg, #2ecc71, #27ae60);">
-                <i class="fas fa-download"></i> Download File
+            <a href="{{ download_url }}" class="btn" target="_blank" id="downloadBtn">
+                <i class="fas fa-download"></i> Download PDF
             </a>
         {% endif %}
-        
-        <div class="file-info">
-            Click to open in Google Drive
-        </div>
-    {% else %}
-        <button class="view-button" style="background: #666; cursor: not-allowed;" disabled>
-            <i class="fas fa-times-circle"></i> No File Available
+        <button class="btn btn-dark" onclick="toggleFullscreen()" id="fullscreenBtn">
+            <i class="fas fa-expand"></i> Fullscreen
         </button>
-        <div class="file-info">
-            This resource has no drive link
+    </div>
+</div>
+
+<div id="pdfContainer">
+    {% if resource.drive_url %}
+        {% if '/file/d/' in resource.drive_url %}
+            {% set file_id = resource.drive_url.split('/file/d/')[1].split('/')[0] %}
+            <!-- HIGH QUALITY PDF EMBED -->
+            <iframe 
+                src="https://drive.google.com/file/d/{{ file_id }}/preview?rm=minimal&view=fitH&zoom=page-width" 
+                class="pdf-frame" 
+                id="pdfFrame"
+                allowfullscreen>
+            </iframe>
+        {% else %}
+            <iframe 
+                src="{{ resource.drive_url }}?rm=minimal&view=fitH&zoom=page-width" 
+                class="pdf-frame" 
+                id="pdfFrame"
+                allowfullscreen>
+            </iframe>
+        {% endif %}
+    {% else %}
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #888;">
+            <div style="text-align: center; padding: 20px;">
+                <i class="fas fa-file-pdf fa-3x" style="margin-bottom: 20px;"></i>
+                <div style="font-size: 18px; margin-bottom: 10px;">No PDF Available</div>
+                <div style="color: #aaa;">Contact administrator for access</div>
+            </div>
         </div>
     {% endif %}
 </div>
+
+<button class="dark-btn" onclick="toggleDarkMode()" id="darkBtn">
+    <i class="fas fa-moon"></i>
+</button>
+
+<script>
+// Add download button feedback
+document.getElementById('downloadBtn')?.addEventListener('click', function() {
+    const originalHTML = this.innerHTML;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+    this.classList.add('btn-loading');
+    
+    // Reset after 3 seconds
+    setTimeout(() => {
+        this.innerHTML = originalHTML;
+        this.classList.remove('btn-loading');
+    }, 3000);
+});
+
+// SIMPLE FULLSCREEN
+function toggleFullscreen() {
+    const container = document.getElementById('pdfContainer');
+    const btn = document.getElementById('fullscreenBtn');
+    
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        } else if (container.mozRequestFullScreen) {
+            container.mozRequestFullScreen();
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+        }
+        
+        if (btn) btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        
+        if (btn) btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
+    }
+}
+
+// Listen for fullscreen changes
+document.addEventListener('fullscreenchange', updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+function updateFullscreenButton() {
+    const btn = document.getElementById('fullscreenBtn');
+    if (!btn) return;
+    
+    if (document.fullscreenElement || 
+        document.webkitFullscreenElement || 
+        document.mozFullScreenElement || 
+        document.msFullscreenElement) {
+        btn.innerHTML = '<i class="fas fa-compress"></i> Exit Fullscreen';
+    } else {
+        btn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
+    }
+}
+
+// SIMPLE DARK MODE
+let isDark = true;
+function toggleDarkMode() {
+    const btn = document.getElementById('darkBtn');
+    const pdfFrame = document.getElementById('pdfFrame');
+    
+    isDark = !isDark;
+    
+    // Add animation
+    btn.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        btn.style.transform = 'scale(1)';
+    }, 150);
+    
+    if (isDark) {
+        document.body.style.filter = 'none';
+        btn.innerHTML = '<i class="fas fa-moon"></i>';
+        btn.title = "Dark Mode";
+    } else {
+        document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+        btn.innerHTML = '<i class="fas fa-sun"></i>';
+        btn.title = "Light Mode";
+    }
+    
+    // Try to notify iframe
+    if (pdfFrame && pdfFrame.contentWindow) {
+        try {
+            pdfFrame.contentWindow.postMessage({
+                type: 'theme',
+                dark: isDark
+            }, '*');
+        } catch (e) {}
+    }
+}
+
+// Auto-hide header in fullscreen
+let hideTimeout;
+document.addEventListener('fullscreenchange', function() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+    
+    if (document.fullscreenElement) {
+        hideTimeout = setTimeout(() => {
+            header.style.opacity = '0';
+            header.style.pointerEvents = 'none';
+        }, 2000);
+    } else {
+        clearTimeout(hideTimeout);
+        header.style.opacity = '1';
+        header.style.pointerEvents = 'all';
+    }
+});
+
+// Show header on mouse move in fullscreen
+document.addEventListener('mousemove', function() {
+    if (document.fullscreenElement) {
+        const header = document.querySelector('.header');
+        if (header) {
+            header.style.opacity = '1';
+            header.style.pointerEvents = 'all';
+            
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                header.style.opacity = '0';
+                header.style.pointerEvents = 'none';
+            }, 2000);
+        }
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.fullscreenElement) {
+        toggleFullscreen();
+    }
+    
+    if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+    }
+    
+    if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        toggleDarkMode();
+    }
+});
+
+// Improve PDF quality
+window.addEventListener('load', function() {
+    const pdfFrame = document.getElementById('pdfFrame');
+    if (!pdfFrame) return;
+    
+    setTimeout(() => {
+        try {
+            const iframeDoc = pdfFrame.contentDocument || pdfFrame.contentWindow.document;
+            iframeDoc.body.style.webkitFontSmoothing = 'antialiased';
+            iframeDoc.body.style.mozOsxFontSmoothing = 'grayscale';
+        } catch (e) {}
+    }, 1000);
+});
+</script>
 {% endblock %}
