@@ -701,12 +701,6 @@
             <form method="POST" action="{{ url_for('add_drive_resource') }}">
                 <div class="form-grid">
                     <!-- Resource Title -->
-                    <div class="form-group">
-                        <label class="form-label required">Resource Title</label>
-                        <input type="text" class="form-control" name="title" 
-                               placeholder="e.g., Calculus Complete Notes" required>
-                    </div>
-                    
                     <!-- Branch -->
                     <div class="form-group">
                         <label class="form-label required">Branch</label>
@@ -746,7 +740,7 @@
                         <select class="form-select" name="resource_type" required>
                             <option value="">Select Type</option>
                             <option value="notes">Study Notes</option>
-                            <option value="pyq">Previous Year Papers</option>
+                            <option value="pyq">PYQs</option>
                             <option value="books">Books</option>
                             <option value="sample">Sample Papers</option>
                         </select>
@@ -757,7 +751,7 @@
                         <label class="form-label">Year</label>
                         <select class="form-select" name="year">
                             <option value="">Select Year</option>
-                            {% for y in range(2020, 2027) %}
+                            {% for y in range(2024, 2027) %}
                             <option value="{{ y }}">{{ y }}</option>
                             {% endfor %}
                         </select>
