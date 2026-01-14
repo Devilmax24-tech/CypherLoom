@@ -6,7 +6,6 @@ import uuid
 import shutil
 from datetime import datetime, timezone
 from urllib.parse import urlencode
-
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, abort, make_response, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -75,8 +74,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     last_login = db.Column(db.DateTime)
     
-    progress = db.relationship('Progress', backref='user',
-                               cascade='all, delete-orphan', lazy=True)
+    progress = db.relationship('Progress', backref='user',lazy=True)
 
 class Resource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -105,8 +103,7 @@ class Resource(db.Model):
 class Progress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id',ondelete='CASCADE'),
-                            nullable=False)
+    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'))
     subject = db.Column(db.String(100), nullable=False)
     topic = db.Column(db.String(200))
     completed = db.Column(db.Boolean, default=False)
@@ -878,6 +875,24 @@ def view_resource_direct(resource_id):
         flash('File not available for viewing.', 'warning')
         return redirect(url_for('view_resource', resource_id=resource_id))
     
+# @app.route('/delete_resource/<int:resource_id>', methods=['POST'])
+# @login_required
+# def delete_resource(resource_id):
+#     if not current_user.is_admin:
+#         abort(403)
+    
+#     resource = Resource.query.get_or_404(resource_id)
+    
+#     try:
+#         # Delete from database
+#         db.session.delete(resource)
+#         db.session.commit()
+#         flash('Resource deleted successfully!', 'success')
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f'Error deleting resource: {str(e)}', 'error')
+    
+#     return redirect(url_for('admin_portal'))
 @app.route('/delete_resource/<int:resource_id>', methods=['POST'])
 @login_required
 def delete_resource(resource_id):
@@ -887,15 +902,26 @@ def delete_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)
     
     try:
-        # Delete from database
+        # Use raw SQL to delete from progress table
+        from sqlalchemy import text
+        
+        # First delete from progress table
+        db.session.execute(
+            text("DELETE FROM progress WHERE resource_id = :resource_id"),
+            {"resource_id": resource_id}
+        )
+        
+        # Now delete the resource
         db.session.delete(resource)
         db.session.commit()
+        
         flash('Resource deleted successfully!', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting resource: {str(e)}', 'error')
     
     return redirect(url_for('admin_portal'))
+
 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
