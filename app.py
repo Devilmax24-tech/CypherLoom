@@ -75,7 +75,8 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     last_login = db.Column(db.DateTime)
     
-    progress = db.relationship('Progress', backref='user', lazy=True)
+    progress = db.relationship('Progress', backref='user',
+                               cascade='all, delete-orphan', lazy=True)
 
 class Resource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -104,7 +105,8 @@ class Resource(db.Model):
 class Progress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'))
+    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id',ondelete='CASCADE'),
+                            nullable=False)
     subject = db.Column(db.String(100), nullable=False)
     topic = db.Column(db.String(200))
     completed = db.Column(db.Boolean, default=False)
