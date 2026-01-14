@@ -701,6 +701,12 @@
             <form method="POST" action="{{ url_for('add_drive_resource') }}">
                 <div class="form-grid">
                     <!-- Resource Title -->
+                    <div class="form-group">
+                        <label class="form-label required">Resource Title</label>
+                        <input type="text" class="form-control" name="title" 
+                               placeholder="e.g., Calculus Complete Notes" required>
+                    </div>
+                    
                     <!-- Branch -->
                     <div class="form-group">
                         <label class="form-label required">Branch</label>
